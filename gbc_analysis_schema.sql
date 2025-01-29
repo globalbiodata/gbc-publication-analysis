@@ -22,6 +22,7 @@ CREATE TABLE `connection_status`(
 CREATE TABLE `grant_agency`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
+    `country` VARCHAR(255),
     `parent_agency_id` BIGINT UNSIGNED,
 
     UNIQUE(`name`)
@@ -29,7 +30,7 @@ CREATE TABLE `grant_agency`(
 
 CREATE TABLE `grant`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `ext_grant_id` VARCHAR(255) NOT NULL,
+    `ext_grant_id` VARCHAR(255),
     `grant_agency_id` BIGINT UNSIGNED NOT NULL,
     
     UNIQUE(`ext_grant_id`),
@@ -70,35 +71,41 @@ CREATE TABLE `publication`(
     `pubmed_id` BIGINT NOT NULL,
     `pmc_id` VARCHAR(255),
     `publication_date` DATE NOT NULL,
-    `authors` VARCHAR(255) NOT NULL,
-    `affiliation` VARCHAR(255) NOT NULL,
+    `authors` TEXT NOT NULL,
+    `affiliation` TEXT NOT NULL,
     `affiliation_countries` VARCHAR(255),
     `citation_count` INT NOT NULL,
-    `keywords` VARCHAR(255),
+    `keywords` TEXT,
 
     UNIQUE(`pubmed_id`)
 );
 
 CREATE TABLE `accession`(
-    `accession` BIGINT UNSIGNED NOT NULL,
-    `publication_id` BIGINT UNSIGNED NOT NULL,
+    `accession` BIGINT UNSIGNED NOT NULL PRIMARY KEY,
     `prediction_id` BIGINT UNSIGNED NOT NULL,
     `resource_id` BIGINT UNSIGNED NOT NULL,
     `prediction_metadata` JSON,
 
-    PRIMARY KEY(`accession`, `publication_id`),
     FOREIGN KEY(`resource_id`) REFERENCES resource(`id`),
     FOREIGN KEY(`prediction_id`) REFERENCES prediction(`id`),
-    FOREIGN KEY(`publication_id`) REFERENCES publication(`id`)
 );
+
+CREATE TABLE `accession_publication`(
+    `accession` BIGINT UNSIGNED NOT NULL,
+    `publication_id` BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY(`accession`, `publication_id`),
+    FOREIGN KEY(`accession`) REFERENCES accession(`accession`),
+    FOREIGN KEY(`publication_id`) REFERENCES publication(`id`)
+)
 
 CREATE TABLE `resource_publication`(
     `resource_id` BIGINT UNSIGNED NOT NULL,
     `publication_id` BIGINT UNSIGNED NOT NULL,
     
     PRIMARY KEY(`resource_id`, `publication_id`),
-    FOREIGN KEY(`resource_id`) REFERENCES resource(`id`), 
-    FOREIGN KEY(`publication_id`) REFERENCES publication(`id`)
+    FOREIGN KEY(`resource_id`) REFERENCES resource(`id`) ON DELETE CASCADE,
+    FOREIGN KEY(`publication_id`) REFERENCES publication(`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE `resource_grant`(
@@ -106,7 +113,15 @@ CREATE TABLE `resource_grant`(
     `grant_id` BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY(`resource_id`, `grant_id`),
-    FOREIGN KEY(`resource_id`) REFERENCES resource(`id`),
-    FOREIGN KEY(`grant_id`) REFERENCES `grant`(`id`)
+    FOREIGN KEY(`resource_id`) REFERENCES resource(`id`) ON DELETE CASCADE,
+    FOREIGN KEY(`grant_id`) REFERENCES `grant`(`id`) ON DELETE CASCADE
 );
 
+CREATE TABLE `publication_grant`(
+    `publication_id` BIGINT UNSIGNED NOT NULL,
+    `grant_id` BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY(`publication_id`, `grant_id`),
+    FOREIGN KEY(`publication_id`) REFERENCES publication(`id`) ON DELETE CASCADE,
+    FOREIGN KEY(`grant_id`) REFERENCES `grant`(`id`) ON DELETE CASCADE
+);
