@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-from pprint import pprint
 import argparse
 
 import pandas as pd
@@ -17,7 +16,7 @@ import globalbiodata as gbc
 
 import locationtagger
 import googlemaps
-gmaps = googlemaps.Client(key='AIzaSyB0uGcyCjumIOjBpUHS1GQh1SRiPerHjn0')
+gmaps = googlemaps.Client(key=os.environ.get("GOOGLE_MAPS_API_KEY"))
 
 
 parser = argparse.ArgumentParser()
