@@ -33,7 +33,7 @@ CREATE TABLE `grant`(
     `ext_grant_id` VARCHAR(255),
     `grant_agency_id` BIGINT UNSIGNED NOT NULL,
     
-    UNIQUE(`ext_grant_id`),
+    UNIQUE(`ext_grant_id`, `grant_agency_id`),
     FOREIGN KEY(`grant_agency_id`) REFERENCES grant_agency(`id`)
 );
 
