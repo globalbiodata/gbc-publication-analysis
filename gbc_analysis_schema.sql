@@ -24,8 +24,13 @@ CREATE TABLE `grant_agency`(
     `name` VARCHAR(255) NOT NULL,
     `country` VARCHAR(255),
     `parent_agency_id` BIGINT UNSIGNED,
+    `representative_agency_id` BIGINT UNSIGNED,
 
     UNIQUE(`name`)
+    KEY `representative_agency_id` (`representative_agency_id`),
+    KEY `parent_agency_id` (`parent_agency_id`),
+    CONSTRAINT `grant_agency_ibfk_1` FOREIGN KEY (`representative_agency_id`) REFERENCES `grant_agency` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `grant_agency_ibfk_2` FOREIGN KEY (`parent_agency_id`) REFERENCES `grant_agency` (`id`) ON DELETE SET NULL
 );
 
 CREATE TABLE `grant`(
@@ -52,13 +57,14 @@ CREATE TABLE `prediction`(
 CREATE TABLE `resource`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `short_name` CHAR(255) NOT NULL,
-    `common_name` CHAR(255) NOT NULL,
-    `full_name` CHAR(255) NOT NULL,
+    `common_name` CHAR(255),
+    `full_name` CHAR(255),
     `url_id` BIGINT UNSIGNED NOT NULL,
     `prediction_id` BIGINT UNSIGNED NOT NULL,
     `prediction_metadata` JSON,
     `is_gcbr` BOOLEAN NOT NULL,
     `is_latest` BOOLEAN NOT NULL,
+    `has_commercial_terms` BOOLEAN NOT NULL DEFAULT 0,
 
     UNIQUE(`short_name`, `url_id`, `prediction_id`),
     FOREIGN KEY(`url_id`) REFERENCES url(`id`),
@@ -76,22 +82,25 @@ CREATE TABLE `publication`(
     `affiliation_countries` VARCHAR(255),
     `citation_count` INT NOT NULL,
     `keywords` TEXT,
+    `email` TEXT,
 
     UNIQUE(`pubmed_id`)
 );
 
 CREATE TABLE `accession`(
-    `accession` BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+    `accession` VARCHAR(255) NOT NULL,
     `prediction_id` BIGINT UNSIGNED NOT NULL,
     `resource_id` BIGINT UNSIGNED NOT NULL,
+    `url` TEXT,
     `prediction_metadata` JSON,
 
+    PRIMARY KEY(`accession`, `prediction_id`, `resource_id`),
     FOREIGN KEY(`resource_id`) REFERENCES resource(`id`),
     FOREIGN KEY(`prediction_id`) REFERENCES prediction(`id`),
 );
 
 CREATE TABLE `accession_publication`(
-    `accession` BIGINT UNSIGNED NOT NULL,
+    `accession` VARCHAR(255) NOT NULL,
     `publication_id` BIGINT UNSIGNED NOT NULL,
 
     PRIMARY KEY(`accession`, `publication_id`),
