@@ -1,11 +1,24 @@
 import sys
+import re
 from datetime import datetime
+
 import sqlalchemy as db
 from sqlalchemy.dialects.mysql import insert # for on_duplicate_key_update
+
+from pprint import pprint
+import locationtagger
+import googlemaps
 
 # ---------------------------------------------------------------------------- #
 # Classes for Global Biodata Core Resource data                                #
 # ---------------------------------------------------------------------------- #
+
+def extract_fields_by_type(d, t):
+    extracted = {}
+    for k, v in d.items():
+        if re.match(f"^{t}", k):
+            extracted[re.sub(f"^{t}_", "", k)] = v
+    return extracted
 
 class URL:
     """
@@ -23,7 +36,7 @@ class URL:
     url_country:str
     url_coordinates:str
     url_status:str
-    status:[]
+    status:list
     wayback_url:str
 
     def __init__(self, u):
@@ -32,11 +45,13 @@ class URL:
         self.url_country = u.get('url_country')
         self.url_coordinates = u.get('url_coordinates')
         self.wayback_url = u.get('wayback_url')
-        
+
         # ConnectionStatus can either come as a list of dicts, a list of ConnectionStatus objects
-        # or status fields directly in the url object. 
+        # or status fields directly in the url object.
         # End result should be a list of ConnectionStatus objs.
-        if type(u.get('status')) == 'list' and len(u.get('status')) > 0:
+        if not u.get('status') or len(u.get('status')) == 0:
+            cs = []
+        elif type(u.get('status')) == 'list':
             if type(u.get('status')[0]) == 'dict':
                 cs = [ConnectionStatus(s) for s in u.get('status')]
             elif type(u.get('status')[0]) == 'ConnectionStatus':
@@ -44,12 +59,12 @@ class URL:
         else:
             cs = [ConnectionStatus({'url_id':self.id, 'status':u.get('url_status'), 'date':u.get('connection_date')})]
         self.status = cs
-    
+
     def __str__(self):
         url_str = ', '.join([
             f"id={self.id}", f"url={self.url}", f"url_country={self.url_country}",
             f"url_coordinates={self.url_coordinates}", f"wayback_url={self.wayback_url}",
-            f"status=[{', '.join([s.__str__() for s in self.status])}]"
+            f"status=[{', '.join([s.__str__() for s in self.status])}]" if self.status else "status=[]"
         ])
         return f"URL({url_str})"
 
@@ -64,14 +79,14 @@ class URL:
             c.write(conn=conn, engine=engine, debug=debug)
         self.status = conn_statuses
         return self.id
-    
+
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.id:
             raise ValueError("URL object must have an ID to delete.")
-        
+
         delete_from_table('connection_status', {'url_id':self.id}, conn=conn, engine=engine, debug=debug)
         del_result = delete_from_table('url', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
@@ -90,7 +105,7 @@ class Prediction:
     name:str
     date:str
     user:str
-    additional_metadata:{}
+    additional_metadata:dict
 
     def __init__(self, p):
         self.id = p.get('id')
@@ -102,7 +117,7 @@ class Prediction:
     def __str__(self):
         pred_str = f"Prediction(id={self.id}, name={self.name}, date={self.date}, user={self.user}, additional_metadata={self.additional_metadata})"
         return pred_str
-    
+
     def write(self, conn=None, engine=None, debug=False):
         new_prediction_id = insert_into_table('prediction', self.__dict__, conn=conn, engine=engine, debug=debug)
         self.id = new_prediction_id
@@ -111,10 +126,10 @@ class Prediction:
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.id:
             raise ValueError("Prediction object must have an ID to delete.")
-        
+
         del_result = delete_from_table('prediction', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
 
@@ -141,8 +156,8 @@ class Resource:
     url:URL
     prediction:Prediction
     prediction_metadata:str
-    publications:[]
-    grants:[]
+    publications:list
+    grants:list
     is_gcbr:bool
     is_latest:bool
 
@@ -156,7 +171,6 @@ class Resource:
         self.url = URL(r2) if type(r.get('url')) == str else r.get('url')
         self.prediction = r.get('prediction') or Prediction(r2)
         self.prediction_metadata = r.get('resource_prediction_metadata') or r.get('prediction_metadata')
-        self.publications = r.get('publications') or [Publication(r2)]
         self.is_gcbr = r.get('is_gcbr')
         self.is_latest = r.get('is_latest')
 
@@ -167,16 +181,21 @@ class Resource:
         else:
             self.grants = []
 
+        if not r.get('publications') and r.get('title') and r.get('pubmed_id') and r.get('authors'):
+            self.publications = [Publication(r2)]
+        else:
+            self.publications = r.get('publications')
+
     def __str__(self):
         resource_str = ', '.join([
             f"id={self.id}", f"short_name={self.short_name}", f"common_name={self.common_name}", f"full_name={self.full_name}",
-            f"is_gcbr={self.is_gcbr}", f"is_latest={self.is_latest}", f"url={self.url.__str__()}", 
+            f"is_gcbr={self.is_gcbr}", f"is_latest={self.is_latest}", f"url={self.url.__str__()}",
             f"prediction={self.prediction.__str__()}", f"prediction_metadata={self.prediction_metadata}",
-            f"publications=[{', '.join([p.__str__() for p in self.publications])}]",
-            f"grants=[{', '.join(g.__str__() for g in self.grants)}]"
+            f"publications=[{', '.join([p.__str__() for p in self.publications])}]" if self.publications else "publications=[]",
+            f"grants=[{', '.join(g.__str__() for g in self.grants)}]" if self.grants else "grants=[]"
         ])
         return f"Resource({resource_str})"
-    
+
     def write(self, conn=None, engine=None, debug=False):
         url_id = self.url.write(conn=conn, engine=engine, debug=debug)
         self.url.id = url_id
@@ -191,15 +210,15 @@ class Resource:
             lconn.commit()
 
         resource_cols = {
-            'id':self.id, 'short_name':self.short_name, 'common_name':self.common_name, 'full_name':self.full_name, 
-            'url_id':self.url.id, 'prediction_id':self.prediction.id, 'prediction_metadata':self.prediction_metadata, 
+            'id':self.id, 'short_name':self.short_name, 'common_name':self.common_name, 'full_name':self.full_name,
+            'url_id':self.url.id, 'prediction_id':self.prediction.id, 'prediction_metadata':self.prediction_metadata,
             'is_gcbr':self.is_gcbr, 'is_latest':self.is_latest
         }
         new_resource_id = insert_into_table('resource', resource_cols, conn=conn, engine=engine, debug=debug)
         self.id = new_resource_id
 
         if self.publications:
-            delete_from_table('resource_publication', {'resource_id':new_resource_id}, conn=conn, engine=engine, debug=debug) # delete existing links
+            # delete_from_table('resource_publication', {'resource_id':new_resource_id}, conn=conn, engine=engine, debug=debug) # delete existing links
             for p in self.publications:
                 new_pub_id = p.write(conn=conn, engine=engine, debug=debug)
                 p.id = new_pub_id
@@ -207,7 +226,7 @@ class Resource:
                 insert_into_table('resource_publication', {'resource_id':new_resource_id, 'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug)
 
         if self.grants:
-            delete_from_table('resource_grant', {'resource_id':new_resource_id}, conn=conn, engine=engine, debug=debug) # delete existing links
+            # delete_from_table('resource_grant', {'resource_id':new_resource_id}, conn=conn, engine=engine, debug=debug) # delete existing links
             for g in self.grants:
                 new_grant_id = g.write(conn=conn, engine=engine, debug=debug)
                 g.id = new_grant_id
@@ -215,24 +234,24 @@ class Resource:
                 insert_into_table('resource_grant', {'resource_id':new_resource_id, 'grant_id':new_grant_id}, conn=conn, engine=engine, debug=debug)
 
         return self.id
-    
+
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.id:
             raise ValueError("Resource object must have an ID to delete.")
-        
+
         rp_del = delete_from_table('resource_publication', {'resource_id':self.id}, conn=conn, engine=engine, debug=debug)
         rg_del = delete_from_table('resource_grant', {'resource_id':self.id}, conn=conn, engine=engine, debug=debug)
         u_del = self.url.delete(conn=conn, engine=engine, debug=debug)
         r_result = delete_from_table('resource', {'id':self.id}, conn=conn, engine=engine, debug=debug)
-        
+
         return r_result
 
 class ConnectionStatus:
     """
-    
+
     `url_id`: Database ID for URL
     `status`: Code returned from connection
     `date`: Date of connection
@@ -259,11 +278,11 @@ class ConnectionStatus:
             self.is_online = self.status[:18] not in ['404', '500', 'HTTPConnectionPool']
         else:
             self.is_online = c.get('is_online')
-        
+
     def __str__(self):
         status_str = f"ConnectionStatus(url_id={self.url_id}, status={self.status}, date={self.date}, is_online={self.is_online}, is_latest={self.is_latest})"
         return status_str
-    
+
     def write(self, conn=None, engine=None, debug=False):
         # update is_latest to 0 for other connection statuses
         if self.is_latest:
@@ -276,10 +295,10 @@ class ConnectionStatus:
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.url_id:
             raise ValueError("ConnectionStatus object must have a URL ID to delete.")
-        
+
         del_result = delete_from_table('connection_status', {'url_id':self.url_id, 'date':self.date}, conn=conn, engine=engine, debug=debug)
         return del_result
 
@@ -305,7 +324,7 @@ class Publication:
     authors:str
     affiliation:str
     affiliation_countries:str
-    grants:[]
+    grants:list
     citation_count:int
     keywords:str
 
@@ -331,19 +350,20 @@ class Publication:
     def __str__(self):
         pub_str = ', '.join([
             f"id={self.id}", f"title={self.title}", f"pubmed_id={self.pubmed_id}", f"pmc_id={self.pmc_id}",
-            f"publication_date={self.publication_date}", f"authors={self.authors}", f"affiliation={self.affiliation}", 
-            f"affiliation_countries={self.affiliation_countries}",f"citation_count={self.citation_count}", 
-            f"keywords={self.keywords}"
+            f"publication_date={self.publication_date}", f"authors={self.authors}", f"affiliation={self.affiliation}",
+            f"affiliation_countries={self.affiliation_countries}",f"citation_count={self.citation_count}",
+            f"keywords={self.keywords}", f"grants=[{', '.join(g.__str__() for g in self.grants)}]",
+            f"grants=[{', '.join(g.__str__() for g in self.grants)}]" if self.grants else "grants=[]"
         ])
         return f"Publication({pub_str})"
-    
+
     def write(self, conn=None, engine=None, debug=False):
         pub_grants = self.__dict__.pop('grants')
         new_pub_id = insert_into_table('publication', self.__dict__, conn=conn, engine=engine, debug=debug)
         self.id = new_pub_id
 
         if pub_grants:
-            delete_from_table('publication_grant', {'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug) # delete existing links
+            # delete_from_table('publication_grant', {'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug) # delete existing links
             for g in pub_grants:
                 new_grant_id = g.write(conn=conn, engine=engine, debug=debug)
                 g.id = new_grant_id
@@ -351,14 +371,14 @@ class Publication:
                 insert_into_table('publication_grant', {'publication_id':new_pub_id, 'grant_id':new_grant_id}, conn=conn, engine=engine, debug=debug)
 
         return self.id
-    
+
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.id:
             raise ValueError("Publication object must have an ID to delete.")
-        
+
         del_result = delete_from_table('publication', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
 
@@ -384,24 +404,24 @@ class Grant:
             raise ValueError(f"Grant Agency must be a string or GrantAgency object. Got: {g.get('grant_agency')} (type:{type(g.get('grant_agency'))}).")
 
     def __str__(self):
-        grant_str = f"Grant(id={self.id}, ext_grant_id={self.ext_grant_id}, grant_agency={self.grant_agency})"
+        grant_str = f"Grant(id={self.id}, ext_grant_id={self.ext_grant_id}, grant_agency={self.grant_agency.__str__()})"
         return grant_str
-    
+
     def write(self, conn=None, engine=None, debug=False):
-        new_ga_id = self.grant_agency.write(conn=conn, engine=engine)
+        new_ga_id = self.grant_agency.write(conn=conn, engine=engine, debug=debug)
         self.grant_agency.id = new_ga_id
         g_cols = {'id':self.id, 'ext_grant_id':self.ext_grant_id, 'grant_agency_id':self.grant_agency.id}
         new_g_id = insert_into_table('grant', g_cols, conn=conn, engine=engine, debug=debug)
         self.id = new_g_id
         return self.id
-    
+
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.id:
             raise ValueError("Grant object must have an ID to delete.")
-        
+
         delete_from_table('resource_grant', {'grant_id':self.id}, conn=conn, engine=engine, debug=debug)
         del_result = delete_from_table('grant', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
@@ -410,40 +430,120 @@ class GrantAgency:
     """
     `id`: Database ID for GrantAgency
     `name`: Name of grant agency
-    `parent_agency_id`: Parent agency ID (to show hierarchy of agencies)
+    `parent_agency`: Parent agency (to show hierarchy of agencies)
+    `representative_agency`: Representative agency (to show grouping of agencies)
     """
     id:int
     name:str
-    parent_agency_id:int
-    
+    country:str
+    parent_agency: 'GrantAgency'
+    representative_agency: 'GrantAgency'
+
+
     def __init__(self, ga):
         self.id = ga.get('id')
         self.name = ga.get('name')
-        self.parent_agency_id = ga.get('parent_agency_id')
+        self.country = ga.get('country')
+
+        if ga.get('parent_agency') or ga.get('parent_agency_id'):
+            self.parent_agency = ga.get('parent_agency') or GrantAgency({'id':ga.get('parent_agency_id')})
+        else:
+            self.parent_agency = None
+
+        if ga.get('representative_agency') or ga.get('representative_agency_id'):
+            self.representative_agency = ga.get('representative_agency') or GrantAgency({'id':ga.get('representative_agency_id')})
+        else:
+            self.representative_agency = None
 
     def __str__(self):
-        grant_agency_str = f"GrantAgency(id={self.id}, name={self.name}, parent_agency_id={self.parent_agency_id})"
+        grant_agency_str = f"GrantAgency(id={self.id}, name={self.name}, country={self.country}, "
+        grant_agency_str += f"parent_agency_id={self.parent_agency.id}, representative_agency_id={self.representative_agency.id})"
         return grant_agency_str
-    
+
     def write(self, conn=None, engine=None, debug=False):
         new_ga_id = insert_into_table('grant_agency', self.__dict__, conn=conn, engine=engine, debug=debug)
         self.id = new_ga_id
         return self.id
-    
+
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
             conn = engine.connect()
-        
+
         if not self.id:
             raise ValueError("GrantAgency object must have an ID to delete.")
-        
+
         del_result = delete_from_table('grant_agency', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
+
+class Accession:
+    """
+    `accession`: Accession ID
+    `resource`: Resource object
+    `publications`: Publication object(s)
+    `prediction`: Prediction object
+    `url`: URL string
+    `prediction_metadata`: Additional prediction metadata in JSON format
+    """
+    accession:str
+    resource:Resource
+    publications:list
+    prediction:Prediction
+    url:str
+    prediction_metadata:str
+
+    def __init__(self, a):
+        self.accession = a.get('accession')
+        self.resource = a.get('resource') or Resource(extract_fields_by_type(a, 'resource'))
+        self.publications = a.get('publications') or [Publication(extract_fields_by_type(a, 'publication'))]
+        self.prediction = a.get('prediction') or Prediction(extract_fields_by_type(a, 'prediction'))
+        self.url = a.get('url')
+        self.prediction_metadata = a.get('prediction_metadata')
+
+    def __str__(self):
+        accession_str = ', '.join([
+            f"accession={self.accession}", f"resource={self.resource.__str__()}",
+            f"prediction={self.prediction.__str__()}", f"prediction_metadata={self.prediction_metadata}",
+            f"publications=[{', '.join([p.__str__() for p in self.publications])}]" if self.publications else "publications=[]",
+            f"url={self.url}", f"prediction_metadata={self.prediction_metadata}"
+        ])
+        return f"Accession({accession_str})"
+
+    def write(self, conn=None, engine=None, debug=False):
+        resource_id = self.resource.write(conn=conn, engine=engine, debug=debug)
+        self.resource.id = resource_id
+
+        prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
+        self.prediction.id = prediction_id
+
+        accession_cols = {
+            'accession':self.accession, 'resource_id':self.resource.id, 'prediction_id':self.prediction.id,
+            'url':self.url, 'prediction_metadata':self.prediction_metadata
+        }
+        insert_into_table('accession', accession_cols, conn=conn, engine=engine, debug=debug)
+
+
+        if self.publications:
+            for p in self.publications:
+                new_pub_id = p.write(conn=conn, engine=engine, debug=debug)
+                p.id = new_pub_id
+                # create links between resource and publication tables
+                insert_into_table('accession_publication', {'accession':self.accession, 'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug)
+
+    def delete(self, conn=None, engine=None, debug=False):
+        if conn is None:
+            conn = engine.connect()
+
+        if not self.accession:
+            raise ValueError("Accession object must have an accession field to perform delete.")
+
+        ap_del = delete_from_table('accession_publication', {'accession':self.accession}, conn=conn, engine=engine, debug=debug)
+        ac_del = delete_from_table('accession', {'accession':self.accession}, conn=conn, engine=engine, debug=debug)
 
 # ---------------------------------------------------------------------------- #
 # Database helper methods                                                      #
 # ---------------------------------------------------------------------------- #
 
+# manually defined primary and unique keys for tables
 table_keys = {
     'resource': {'pk': ['id'], 'uk': ['short_name', 'url_id', 'prediction_id']},
     'url': {'pk': ['id'], 'uk': ['url']},
@@ -483,20 +583,20 @@ def fetch_id_from_unique_keys(table, data, conn, debug=False):
     uniq_col_names = get_unique_keys(table, conn)
     if not uniq_col_names:
         return 0
-    
+
     wheres = [table.columns.get(ucn) == data[ucn] for ucn in uniq_col_names]
     if debug:
         print(f"--> finding ids with cols: {', '.join(uniq_col_names)}")
-    
+
     select = db.select(table.c.id).where(db.and_(*wheres))
     result = conn.execute(select).fetchone()
     if result is None:
         raise ValueError(f"Entity not found in table {table.name} with unique keys: ", {k:v for k, v in data.items() if k in uniq_col_names})
     return result[0]
 
-def remove_key_fields(table, conn, data):
+def remove_key_fields(table, conn, data): # also remove empty values
     key_names = get_all_keys(table, conn)
-    return {k:v for k, v in data.items() if k not in key_names}
+    return {k:v for k, v in data.items() if (k not in key_names and v is not None)}
 
 def stringify_data(data):
     for k, v in data.items():
@@ -504,7 +604,7 @@ def stringify_data(data):
             data[k] = '; '.join(v)
     return data
 
-def insert_into_table(table_name, data, update=True, conn=None, engine=None, debug=False):
+def insert_into_table(table_name, data, conn=None, engine=None, debug=False):
     metadata_obj = db.MetaData()
     table = db.Table(table_name, metadata_obj, autoload_with=engine)
     data = stringify_data(data)
@@ -522,6 +622,8 @@ def insert_into_table(table_name, data, update=True, conn=None, engine=None, deb
         data_no_pks = remove_key_fields(table, conn, data)
         if data_no_pks: # some tables may not have any non-PK fields
             do_update_stmt = insert_stmt.on_duplicate_key_update(data_no_pks)
+            if debug:
+                print(f"Updating {table_name} with data: {data_no_pks}")
             result = conn.execute(do_update_stmt)
         else:
             result = conn.execute(insert_stmt.prefix_with('IGNORE'))
@@ -531,14 +633,14 @@ def insert_into_table(table_name, data, update=True, conn=None, engine=None, deb
         affected_rows = result.rowcount
         # print(f"inserted_pk: {inserted_pk}; affected_rows: {affected_rows}")
 
-        if (inserted_pk == 0 or (inserted_pk > 0 and affected_rows == 0)): 
+        # if (inserted_pk == 0 or (inserted_pk > 0 and affected_rows == 0)):
+        if (not inserted_pk or (inserted_pk and affected_rows == 0)):
             # entity already existed and was ignored - find id of entity to return
-            # existing_id = inserted_pk if inserted_pk > 0 else fetch_id_from_unique_keys(table, data, conn)
             existing_id = fetch_id_from_unique_keys(table, data, conn, debug=debug) or inserted_pk
             if debug:
                 print(f"Entity already exists. Fetched id: {existing_id}")
             this_id = existing_id
-        elif (inserted_pk > 0 and affected_rows > 1):
+        elif (inserted_pk and affected_rows > 1):
             # entity already existed and was updated
             this_id = inserted_pk
             if debug:
@@ -555,7 +657,7 @@ def insert_into_table(table_name, data, update=True, conn=None, engine=None, deb
         raise
     finally:
         conn.close()  # Close the connection
-    
+
     return this_id
 
 def delete_from_table(table_name, data, conn=None, engine=None, debug=False):
@@ -586,7 +688,7 @@ def delete_from_table(table_name, data, conn=None, engine=None, debug=False):
 
     return del_result.rowcount
 
-def select_from_table(table_name, data, conn=None, engine=None, debug=False):
+def select_from_table(table_name, data={}, conn=None, engine=None, debug=False):
     metadata_obj = db.MetaData()
     table = db.Table(table_name, metadata_obj, autoload_with=engine)
 
@@ -596,7 +698,7 @@ def select_from_table(table_name, data, conn=None, engine=None, debug=False):
 
     if conn is None:
         conn = engine.connect()
-    
+
     wheres = []
     for c in data.keys():
         if type(data[c]) == list:
@@ -606,94 +708,108 @@ def select_from_table(table_name, data, conn=None, engine=None, debug=False):
     select = db.select(table).where(db.and_(*wheres))
     result = conn.execute(select).fetchall()
 
-    # convert result to list of dicts    
+    # convert result to list of dicts
     d_result = [dict(zip(table.columns.keys(), list(r))) for r in result]
 
     conn.close()
     return d_result
 
-# ---------------------------------------------------------------------------- #
-# Fetcher methods for Global Biodata Core Resource data                        #
-# ---------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------- #
+# Fetcher methods for Global Biodata Resource data                        #
+# ----------------------------------------------------------------------- #
 
-def fetch_resource(query, conn=None, engine=None, debug=False):
+def fetch_resource(query, expanded=True, conn=None, engine=None, debug=False):
     resource_raw = select_from_table('resource', query, conn=conn, engine=engine, debug=debug)
     if len(resource_raw) == 0:
         return None
-        # raise ValueError(f"No resource found with query: {query}")
-    
+
     resources = []
     for r in resource_raw:
         r['url'] = fetch_url({'id':r['url_id']}, conn=conn, engine=engine, debug=debug)
         r['prediction'] = fetch_prediction({'id':r['prediction_id']}, conn=conn, engine=engine, debug=debug)
 
-        pub_ids = select_from_table('resource_publication', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
-        r['publications'] = fetch_publication({'id':[p['publication_id'] for p in pub_ids]}, conn=conn, engine=engine, debug=debug)
-        r['publications'] = [r['publications']] if type(r['publications']) != list else r['publications']
+        if expanded:
+            pub_ids = select_from_table('resource_publication', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
+            r['publications'] = fetch_publication({'id':[p['publication_id'] for p in pub_ids]}, conn=conn, engine=engine, debug=debug)
+            r['publications'] = [r['publications']] if type(r['publications']) != list else r['publications']
 
-        grant_ids = select_from_table('resource_grant', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
-        r['grants'] = fetch_grant({'id':[g['grant_id'] for g in grant_ids]}, conn=conn, engine=engine, debug=debug)
-        r['grants'] = [r['grants']] if type(r['grants']) != list else r['grants']
+            grant_ids = select_from_table('resource_grant', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
+            r['grants'] = fetch_grant({'id':[g['grant_id'] for g in grant_ids]}, conn=conn, engine=engine, debug=debug)
+            r['grants'] = [r['grants']] if (r['grants'] is not None and type(r['grants']) != list) else r['grants']
 
         resources.append(Resource(r))
 
     return resources if len(resources) > 1 else resources[0]
 
-def fetch_url(query, conn=None, engine=None, debug=False):
+def fetch_all_resources(expanded=True, conn=None, engine=None, debug=False):
+    return fetch_resource({}, expanded=expanded, conn=conn, engine=engine, debug=debug)
+
+def fetch_url(query, expanded=True, conn=None, engine=None, debug=False):
     url_raw = select_from_table('url', query, conn=conn, engine=engine, debug=debug)
     if len(url_raw) == 0:
         return None
-        # raise ValueError(f"No URL found with query: {query}")
-    
+
     urls = []
     for u in url_raw:
-        u['status'] = fetch_connection_status({'url_id':u['id']}, conn=conn, engine=engine, debug=debug)
-        urls.append(URL(u))    
+        if expanded:
+            u['status'] = fetch_connection_status({'url_id':u['id']}, conn=conn, engine=engine, debug=debug)
+            u['status'] = [u['status']] if (u['status'] is not None and type(u['status']) != list) else u['status']
+        urls.append(URL(u))
 
     return urls if len(urls) > 1 else urls[0]
+
+def fetch_all_urls(expanded=True, conn=None, engine=None, debug=False):
+    return fetch_url({}, expanded=expanded, conn=conn, engine=engine, debug=debug)
 
 def fetch_connection_status(query, conn=None, engine=None, debug=False):
     status_raw = select_from_table('connection_status', query, conn=conn, engine=engine, debug=debug)
     if len(status_raw) == 0:
         return None
-        # raise ValueError(f"No connection status found with query: {query}")
-    
+
     conn_stats = [ConnectionStatus(cs) for cs in status_raw]
 
     return conn_stats if len(conn_stats) > 1 else conn_stats[0]
+
+def fetch_all_connection_statuses(conn=None, engine=None, debug=False):
+    return fetch_connection_status({}, conn=conn, engine=engine, debug=debug)
 
 def fetch_prediction(query, conn=None, engine=None, debug=False):
     prediction_raw = select_from_table('prediction', query, conn=conn, engine=engine, debug=debug)
     if len(prediction_raw) == 0:
         return None
-        # raise ValueError(f"No prediction found with query: {query}")
-    
+
     predictions = [Prediction(p) for p in prediction_raw]
 
     return predictions if len(predictions) > 1 else predictions[0]
 
-def fetch_publication(query, conn=None, engine=None, debug=False):
+def fetch_all_predictions(conn=None, engine=None, debug=False):
+    return fetch_prediction({}, conn=conn, engine=engine, debug=debug)
+
+def fetch_publication(query, expanded=True, conn=None, engine=None, debug=False):
     publication_raw = select_from_table('publication', query, conn=conn, engine=engine, debug=debug)
     if len(publication_raw) == 0:
         return None
-        # raise ValueError(f"No publication found with query: {query}")
-    
-    # publications = [Publication(p) for p in publication_raw]
+
     publications = []
     for p in publication_raw:
         grant_ids = select_from_table('publication_grant', {'publication_id':p['id']}, conn=conn, engine=engine, debug=debug)
-        p['grants'] = fetch_grant({'id':[g['grant_id'] for g in grant_ids]}, conn=conn, engine=engine, debug=debug)
+
+        if expanded:
+            p['grants'] = fetch_grant({'id':[g['grant_id'] for g in grant_ids]}, conn=conn, engine=engine, debug=debug)
+            p['grants'] = [p['grants']] if (p['grants'] is not None and type(p['grants']) != list) else p['grants']
 
         publications.append(Publication(p))
 
     return publications if len(publications) > 1 else publications[0]
 
+def fetch_all_publications(conn=None, engine=None, debug=False):
+    return fetch_publication({}, conn=conn, engine=engine, debug=debug)
+
 def fetch_grant(query, conn=None, engine=None, debug=False):
     grant_raw = select_from_table('grant', query, conn=conn, engine=engine, debug=debug)
     if len(grant_raw) == 0:
         return None
-        # raise ValueError(f"No grant found with query: {query}")
-    
+
     grants = []
     for g in grant_raw:
         g['grant_agency'] = fetch_grant_agency({'id':g['grant_agency_id']}, conn=conn, engine=engine, debug=debug)
@@ -701,12 +817,124 @@ def fetch_grant(query, conn=None, engine=None, debug=False):
 
     return grants if len(grants) > 1 else grants[0]
 
+def fetch_all_grants(conn=None, engine=None, debug=False):
+    return fetch_grant({}, conn=conn, engine=engine, debug=debug)
+
 def fetch_grant_agency(query, conn=None, engine=None, debug=False):
     grant_agency_raw = select_from_table('grant_agency', query, conn=conn, engine=engine, debug=debug)
     if len(grant_agency_raw) == 0:
         return None
-        # raise ValueError(f"No grant agency found with query: {query}")
-    
+
     grant_agencies = [GrantAgency(ga) for ga in grant_agency_raw]
 
     return grant_agencies if len(grant_agencies) > 1 else grant_agencies[0]
+
+def fetch_all_grant_agencies(conn=None, engine=None, debug=False):
+    return fetch_grant_agency({}, conn=conn, engine=engine, debug=debug)
+
+
+# ----------------------------------------------------------------------- #
+# Other helper methods                                                    #
+# ----------------------------------------------------------------------- #
+def new_publication_from_EuropePMC_result(epmc_result, google_maps_api_key=None):
+    affiliations, countries = extract_affiliations(epmc_result, google_maps_api_key=google_maps_api_key)
+    new_publication = Publication({
+        'publication_title': epmc_result.get('title', ''), 'pubmed_id': epmc_result.get('pmid', ''), 'pmc_id': epmc_result.get('pmcid', ''),
+        'publication_date': epmc_result.get('journalInfo', {}).get('printPublicationDate'), 'grants': extract_grants(epmc_result),
+        'keywords': extract_keywords(epmc_result), 'citation_count': epmc_result.get('citedByCount', 0),
+        'authors': epmc_result.get('authorString', ''), 'affiliation': affiliations, 'affiliation_countries': countries
+    })
+    return new_publication
+
+def extract_grants(metadata):
+    # extract grant list
+    try:
+        grant_list = metadata['grantsList']['grant']
+    except KeyError:
+        return []
+
+    grants = []
+    for g in grant_list:
+        ga = g.get('agency', '')
+        grants.append(Grant({'ext_grant_id':g.get('grantId', ''), 'grant_agency':GrantAgency({'name':ga})}))
+
+    return grants
+
+def extract_keywords(metadata):
+    keywords = []
+
+    # first, MeSH terms
+    these_mesh_terms = metadata.get('meshHeadingList', {}).get('meshHeading', [])
+    for m in these_mesh_terms:
+        keywords.append(f"'{m['descriptorName']}'")
+        if m.get('meshQualifierList'):
+            for q in m.get('meshQualifierList', {}).get('meshQualifier', []):
+                keywords.append(f"'{q['qualifierName']}'")
+
+    # then, other keywords
+    these_keywords = metadata.get('keywordList', {}).get('keyword', [])
+    for k in these_keywords:
+        keywords.append(f"'{k}'")
+
+    return keywords
+
+def clean_affilation(s):
+    # format and replace common abbreviations
+    s = re.sub(r'\s*[\w\.]+@[\w\.]+\s*', '', s) # remove email addresses & surrounding whitespace
+    s = re.sub(r'\s?[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}', '', s) # remove UK postal codes
+    s = s.strip()
+    s = re.sub(r'USA[\.]?$', 'United States', s)
+    s = re.sub(r'UK[\.]?$', 'United Kingdom', s)
+    return s
+
+# pull author affiliations and identify countries
+def extract_affiliations(metadata, google_maps_api_key=None):
+    # extract author affiliations & countries
+    affiliations, countries = [], []
+    affiliation_dict, countries_dict = {}, {}
+    try:
+        author_list = metadata['authorList']['author']
+        for author in author_list:
+            affiliation_list = author.get('authorAffiliationDetailsList', {}).get('authorAffiliation', [])
+            for a in affiliation_list:
+                clean_a = clean_affilation(a['affiliation'])
+                affiliation_dict[clean_a] = 1
+                a_countries = find_country(clean_a, google_maps_api_key=google_maps_api_key)
+                countries_dict.update({x:1 for x in a_countries[0]})
+        affiliations = list(affiliation_dict.keys())
+        countries = list(countries_dict.keys())
+    except KeyError:
+        pass
+
+    return affiliations, countries
+
+def find_country(s, google_maps_api_key=None):
+    # print(f"Searching for countries in '{s}'")
+
+    # location search
+    place_entity = locationtagger.find_locations(text = s)
+    if place_entity.countries:
+        return (place_entity.countries, 'locationtagger')
+    elif place_entity.country_regions:
+        if len(place_entity.country_regions) == 1: # no ambiguity
+            return (list(place_entity.country_regions.keys()), 'locationtagger')
+        elif google_maps_api_key:
+            return (advanced_geo_lookup(s, api_key=google_maps_api_key), 'GoogleMaps')
+        else:
+            return ()
+    else:
+        if len(place_entity.country_cities) == 1: # no ambiguity
+            return (list(place_entity.country_cities.keys()), 'locationtagger')
+        elif google_maps_api_key:
+            return (advanced_geo_lookup(s, api_key=google_maps_api_key), 'GoogleMaps')
+        else:
+            return ()
+
+def advanced_geo_lookup(address, api_key=None):
+    gmaps = googlemaps.Client(key=api_key)
+    place_search = gmaps.find_place(address, "textquery", fields=["formatted_address", "place_id"])
+    try:
+        place_entity = locationtagger.find_locations(text = place_search['candidates'][0]['formatted_address'])
+        return place_entity.countries
+    except:
+        return []
