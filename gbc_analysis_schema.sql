@@ -21,7 +21,7 @@ CREATE TABLE `connection_status`(
 
 CREATE TABLE `grant_agency`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(500) NOT NULL,
     `country` VARCHAR(255),
     `parent_agency_id` BIGINT UNSIGNED,
     `representative_agency_id` BIGINT UNSIGNED,
@@ -37,7 +37,7 @@ CREATE TABLE `grant`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `ext_grant_id` VARCHAR(255),
     `grant_agency_id` BIGINT UNSIGNED NOT NULL,
-    
+
     UNIQUE(`ext_grant_id`, `grant_agency_id`),
     FOREIGN KEY(`grant_agency_id`) REFERENCES grant_agency(`id`)
 );
@@ -73,7 +73,7 @@ CREATE TABLE `resource`(
 
 CREATE TABLE `publication`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `title` VARCHAR(255) NOT NULL,
+    `title` VARCHAR(500) NOT NULL,
     `pubmed_id` BIGINT NOT NULL,
     `pmc_id` VARCHAR(255),
     `publication_date` DATE NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE `accession_publication`(
 CREATE TABLE `resource_publication`(
     `resource_id` BIGINT UNSIGNED NOT NULL,
     `publication_id` BIGINT UNSIGNED NOT NULL,
-    
+
     PRIMARY KEY(`resource_id`, `publication_id`),
     FOREIGN KEY(`resource_id`) REFERENCES resource(`id`) ON DELETE CASCADE,
     FOREIGN KEY(`publication_id`) REFERENCES publication(`id`) ON DELETE CASCADE

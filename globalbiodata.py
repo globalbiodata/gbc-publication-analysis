@@ -196,12 +196,14 @@ class Resource:
         ])
         return f"Resource({resource_str})"
 
-    def write(self, conn=None, engine=None, debug=False):
-        url_id = self.url.write(conn=conn, engine=engine, debug=debug)
-        self.url.id = url_id
+    def write(self, conn=None, engine=None, debug=False, force=False):
+        if not self.url.id or force:
+            url_id = self.url.write(conn=conn, engine=engine, debug=debug)
+            self.url.id = url_id
 
-        prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
-        self.prediction.id = prediction_id
+        if not self.prediction.id or force:
+            prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
+            self.prediction.id = prediction_id
 
         # set is_latest to 0 for other versions of this resource
         if self.is_latest:
@@ -220,18 +222,20 @@ class Resource:
         if self.publications:
             # delete_from_table('resource_publication', {'resource_id':new_resource_id}, conn=conn, engine=engine, debug=debug) # delete existing links
             for p in self.publications:
-                new_pub_id = p.write(conn=conn, engine=engine, debug=debug)
-                p.id = new_pub_id
+                if not p.id or force:
+                    new_pub_id = p.write(conn=conn, engine=engine, debug=debug)
+                    p.id = new_pub_id
                 # create links between resource and publication tables
-                insert_into_table('resource_publication', {'resource_id':new_resource_id, 'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug)
+                insert_into_table('resource_publication', {'resource_id':new_resource_id, 'publication_id':p.id}, conn=conn, engine=engine, debug=debug)
 
         if self.grants:
             # delete_from_table('resource_grant', {'resource_id':new_resource_id}, conn=conn, engine=engine, debug=debug) # delete existing links
             for g in self.grants:
-                new_grant_id = g.write(conn=conn, engine=engine, debug=debug)
-                g.id = new_grant_id
+                if not g.id or force:
+                    new_grant_id = g.write(conn=conn, engine=engine, debug=debug)
+                    g.id = new_grant_id
                 # create links between resource and grant tables
-                insert_into_table('resource_grant', {'resource_id':new_resource_id, 'grant_id':new_grant_id}, conn=conn, engine=engine, debug=debug)
+                insert_into_table('resource_grant', {'resource_id':new_resource_id, 'grant_id':g.id}, conn=conn, engine=engine, debug=debug)
 
         return self.id
 
@@ -357,18 +361,21 @@ class Publication:
         ])
         return f"Publication({pub_str})"
 
-    def write(self, conn=None, engine=None, debug=False):
-        pub_grants = self.__dict__.pop('grants')
-        new_pub_id = insert_into_table('publication', self.__dict__, conn=conn, engine=engine, debug=debug)
+    def write(self, conn=None, engine=None, debug=False, force=False):
+        self_dict = self.__dict__.copy()
+        pub_grants = self_dict.pop('grants')
+        new_pub_id = insert_into_table('publication', self_dict, conn=conn, engine=engine, debug=debug)
         self.id = new_pub_id
 
         if pub_grants:
             # delete_from_table('publication_grant', {'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug) # delete existing links
             for g in pub_grants:
-                new_grant_id = g.write(conn=conn, engine=engine, debug=debug)
-                g.id = new_grant_id
+                if not g.id or force:
+                    new_grant_id = g.write(conn=conn, engine=engine, debug=debug)
+                    g.id = new_grant_id
+
                 # create links between publication and grant tables
-                insert_into_table('publication_grant', {'publication_id':new_pub_id, 'grant_id':new_grant_id}, conn=conn, engine=engine, debug=debug)
+                insert_into_table('publication_grant', {'publication_id':new_pub_id, 'grant_id':g.id}, conn=conn, engine=engine, debug=debug)
 
         return self.id
 
@@ -407,9 +414,11 @@ class Grant:
         grant_str = f"Grant(id={self.id}, ext_grant_id={self.ext_grant_id}, grant_agency={self.grant_agency.__str__()})"
         return grant_str
 
-    def write(self, conn=None, engine=None, debug=False):
-        new_ga_id = self.grant_agency.write(conn=conn, engine=engine, debug=debug)
-        self.grant_agency.id = new_ga_id
+    def write(self, conn=None, engine=None, debug=False, force=False):
+        if not self.grant_agency.id or force:
+            new_ga_id = self.grant_agency.write(conn=conn, engine=engine, debug=debug)
+            self.grant_agency.id = new_ga_id
+
         g_cols = {'id':self.id, 'ext_grant_id':self.ext_grant_id, 'grant_agency_id':self.grant_agency.id}
         new_g_id = insert_into_table('grant', g_cols, conn=conn, engine=engine, debug=debug)
         self.id = new_g_id
@@ -457,11 +466,16 @@ class GrantAgency:
 
     def __str__(self):
         grant_agency_str = f"GrantAgency(id={self.id}, name={self.name}, country={self.country}, "
-        grant_agency_str += f"parent_agency_id={self.parent_agency.id}, representative_agency_id={self.representative_agency.id})"
+        grant_agency_str += f"parent_agency_id={self.parent_agency.id if self.parent_agency else ''}"
+        grant_agency_str += f"representative_agency_id={self.representative_agency.id if self.representative_agency else ''})"
         return grant_agency_str
 
     def write(self, conn=None, engine=None, debug=False):
-        new_ga_id = insert_into_table('grant_agency', self.__dict__, conn=conn, engine=engine, debug=debug)
+        writable = {'id':self.id, 'name':self.name, 'country':self.country}
+        writable['parent_agency_id'] = self.parent_agency.id if self.parent_agency else None
+        writable['representative_agency_id'] = self.representative_agency.id if self.representative_agency else None
+
+        new_ga_id = insert_into_table('grant_agency', writable, conn=conn, engine=engine, debug=debug)
         self.id = new_ga_id
         return self.id
 
@@ -508,12 +522,14 @@ class Accession:
         ])
         return f"Accession({accession_str})"
 
-    def write(self, conn=None, engine=None, debug=False):
-        resource_id = self.resource.write(conn=conn, engine=engine, debug=debug)
-        self.resource.id = resource_id
+    def write(self, conn=None, engine=None, debug=False, force=False):
+        if not self.resource.id or force:
+            resource_id = self.resource.write(conn=conn, engine=engine, debug=debug)
+            self.resource.id = resource_id
 
-        prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
-        self.prediction.id = prediction_id
+        if not self.prediction.id or force:
+            prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
+            self.prediction.id = prediction_id
 
         accession_cols = {
             'accession':self.accession, 'resource_id':self.resource.id, 'prediction_id':self.prediction.id,
@@ -524,10 +540,12 @@ class Accession:
 
         if self.publications:
             for p in self.publications:
-                new_pub_id = p.write(conn=conn, engine=engine, debug=debug)
-                p.id = new_pub_id
+                if not p.id or force:
+                    new_pub_id = p.write(conn=conn, engine=engine, debug=debug)
+                    p.id = new_pub_id
+
                 # create links between resource and publication tables
-                insert_into_table('accession_publication', {'accession':self.accession, 'publication_id':new_pub_id}, conn=conn, engine=engine, debug=debug)
+                insert_into_table('accession_publication', {'accession':self.accession, 'publication_id':p.id}, conn=conn, engine=engine, debug=debug)
 
     def delete(self, conn=None, engine=None, debug=False):
         if conn is None:
@@ -837,16 +855,16 @@ def fetch_all_grant_agencies(conn=None, engine=None, debug=False):
 # Other helper methods                                                    #
 # ----------------------------------------------------------------------- #
 def new_publication_from_EuropePMC_result(epmc_result, google_maps_api_key=None):
-    affiliations, countries = extract_affiliations(epmc_result, google_maps_api_key=google_maps_api_key)
+    affiliations, countries = _extract_affiliations(epmc_result, google_maps_api_key=google_maps_api_key)
     new_publication = Publication({
         'publication_title': epmc_result.get('title', ''), 'pubmed_id': epmc_result.get('pmid', ''), 'pmc_id': epmc_result.get('pmcid', ''),
-        'publication_date': epmc_result.get('journalInfo', {}).get('printPublicationDate'), 'grants': extract_grants(epmc_result),
-        'keywords': extract_keywords(epmc_result), 'citation_count': epmc_result.get('citedByCount', 0),
+        'publication_date': epmc_result.get('journalInfo', {}).get('printPublicationDate'), 'grants': _extract_grants(epmc_result),
+        'keywords': '; '.join(_extract_keywords(epmc_result)), 'citation_count': epmc_result.get('citedByCount', 0),
         'authors': epmc_result.get('authorString', ''), 'affiliation': affiliations, 'affiliation_countries': countries
     })
     return new_publication
 
-def extract_grants(metadata):
+def _extract_grants(metadata):
     # extract grant list
     try:
         grant_list = metadata['grantsList']['grant']
@@ -860,7 +878,7 @@ def extract_grants(metadata):
 
     return grants
 
-def extract_keywords(metadata):
+def _extract_keywords(metadata):
     keywords = []
 
     # first, MeSH terms
@@ -878,7 +896,7 @@ def extract_keywords(metadata):
 
     return keywords
 
-def clean_affilation(s):
+def _clean_affilation(s):
     # format and replace common abbreviations
     s = re.sub(r'\s*[\w\.]+@[\w\.]+\s*', '', s) # remove email addresses & surrounding whitespace
     s = re.sub(r'\s?[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][A-Z]{2}', '', s) # remove UK postal codes
@@ -888,7 +906,7 @@ def clean_affilation(s):
     return s
 
 # pull author affiliations and identify countries
-def extract_affiliations(metadata, google_maps_api_key=None):
+def _extract_affiliations(metadata, google_maps_api_key=None):
     # extract author affiliations & countries
     affiliations, countries = [], []
     affiliation_dict, countries_dict = {}, {}
@@ -897,9 +915,9 @@ def extract_affiliations(metadata, google_maps_api_key=None):
         for author in author_list:
             affiliation_list = author.get('authorAffiliationDetailsList', {}).get('authorAffiliation', [])
             for a in affiliation_list:
-                clean_a = clean_affilation(a['affiliation'])
+                clean_a = _clean_affilation(a['affiliation'])
                 affiliation_dict[clean_a] = 1
-                a_countries = find_country(clean_a, google_maps_api_key=google_maps_api_key)
+                a_countries = _find_country(clean_a, google_maps_api_key=google_maps_api_key)
                 countries_dict.update({x:1 for x in a_countries[0]})
         affiliations = list(affiliation_dict.keys())
         countries = list(countries_dict.keys())
@@ -908,7 +926,7 @@ def extract_affiliations(metadata, google_maps_api_key=None):
 
     return affiliations, countries
 
-def find_country(s, google_maps_api_key=None):
+def _find_country(s, google_maps_api_key=None):
     # print(f"Searching for countries in '{s}'")
 
     # location search
@@ -919,18 +937,18 @@ def find_country(s, google_maps_api_key=None):
         if len(place_entity.country_regions) == 1: # no ambiguity
             return (list(place_entity.country_regions.keys()), 'locationtagger')
         elif google_maps_api_key:
-            return (advanced_geo_lookup(s, api_key=google_maps_api_key), 'GoogleMaps')
+            return (_advanced_geo_lookup(s, api_key=google_maps_api_key), 'GoogleMaps')
         else:
-            return ()
+            return ([], '')
     else:
         if len(place_entity.country_cities) == 1: # no ambiguity
             return (list(place_entity.country_cities.keys()), 'locationtagger')
         elif google_maps_api_key:
-            return (advanced_geo_lookup(s, api_key=google_maps_api_key), 'GoogleMaps')
+            return (_advanced_geo_lookup(s, api_key=google_maps_api_key), 'GoogleMaps')
         else:
-            return ()
+            return ([], '')
 
-def advanced_geo_lookup(address, api_key=None):
+def _advanced_geo_lookup(address, api_key=None):
     gmaps = googlemaps.Client(key=api_key)
     place_search = gmaps.find_place(address, "textquery", fields=["formatted_address", "place_id"])
     try:
