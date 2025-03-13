@@ -3,10 +3,12 @@ process QUERY_EUROPEPMC {
     debug true
 
     input:
-    path(cursors)
     path(accession_types)
     val page_size
     val limit
+    val db
+    val db_user
+    val db_pass
 
     output:
     path("epmc_jsons/**.json"), emit: epmc_jsons
@@ -14,7 +16,8 @@ process QUERY_EUROPEPMC {
 
     script:
     """
-    query_epmc.py --cursor-file ${cursors} --accession-types ${accession_types} --outdir epmc_jsons/ \
-    --page-size ${page_size} --limit ${limit}
+    query_epmc.py --accession-types ${accession_types} --outdir epmc_jsons/ \
+    --page-size ${page_size} --limit ${limit} \
+    --db ${db} --sqluser ${db_user} --sqlpass ${db_pass}
     """
 }

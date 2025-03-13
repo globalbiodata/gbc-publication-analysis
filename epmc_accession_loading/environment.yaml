@@ -1,13 +1,20 @@
+name: gbc-conda
 channels:
   - conda-forge
   - bioconda
 dependencies:
   - python = 3.9
+  - pip
+  - tree
   - pymysql
   - cloud-sql-python-connector[pymysql]
   - sqlalchemy
   - pandas
-  - locationtagger
   - googlemaps
   - requests
-  - argparse
+  - spacy
+  - pip:
+    - argparse
+    - lxml[html_clean]
+    - locationtagger
+

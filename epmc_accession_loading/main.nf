@@ -6,31 +6,22 @@ include { WRITE_TO_GBC } from './modules/writeToGBC'
 
 workflow {
     main:
-        if (!file('cursors.txt').exists()) {
-            file('cursors.txt').text = ''
-        }
+        limit = params.limit ?: 0
 
         query = QUERY_EUROPEPMC(
-            file('cursors.txt'),
             file(params.accession_types),
             params.page_size,
-            params.limit
+            limit,
+            params.db,
+            params.db_user,
+            params.db_pass
         )
         query.epmc_jsons | flatten
         | view
 
         query.epmc_jsons
         | flatten
-        | map { json -> [json, file(params.accession_types), params.db] }
-        | WRITE_TO_GBC
-
-        // query.epmc_json_dir.subscribe { println "Query results are in ${it}" }
-
-        // query.epmc_json_dir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
-        //     println "${file.getName()} - size: ${file.size()}"
-        // }
-
-        // Channel.fromPath(query.epmc_json_dir + '/**.json')
-        // | map { file -> tuple(file, params.accession_types, params.db) }
-        // | WRITE_TO_GBC
+        | map { json ->
+            [json, file(params.accession_types), params.db, params.db_user, params.db_pass]
+        } | WRITE_TO_GBC
 }

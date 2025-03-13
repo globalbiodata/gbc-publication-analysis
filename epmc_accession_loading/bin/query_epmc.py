@@ -8,18 +8,41 @@ import time
 import random
 import argparse
 
+from google.cloud.sql.connector import Connector
+import pymysql
+import sqlalchemy as db
+
 parser = argparse.ArgumentParser(description='Query EuropePMC for accession data.')
-parser.add_argument('--cursor-file', type=str, help='File to read/write cursor mark', required=True)
+# parser.add_argument('--cursor-file', type=str, help='File to read/write cursor mark', required=True)
 parser.add_argument('--accession-types', type=str, help='Path to JSON file with accession types', required=True)
 parser.add_argument('--outdir', type=str, help='Output directory for results', required=True)
 
+parser.add_argument('--db', type=str, help='Database to use (format: instance_name/db_name)', required=True)
+parser.add_argument('--sqluser', type=str, help='SQL user', default=os.environ.get("CLOUD_SQL_USER"))
+parser.add_argument('--sqlpass', type=str, help='SQL password', default=os.environ.get("CLOUD_SQL_PASSWORD"))
+
 parser.add_argument('--page-size', type=int, default=1000, help='Number of results per page')
-parser.add_argument('--limit', type=int, help='Limit the number of results')
+parser.add_argument('--limit', type=int, default=0, help='Limit the number of results')
 
 args = parser.parse_args()
+limit = args.limit if args.limit > 0 else None
 
 if not os.path.exists(args.outdir):
     os.makedirs(args.outdir)
+
+gcp_connector = Connector()
+instance, db_name = args.db.split('/')
+def getcloudconn() -> pymysql.connections.Connection:
+    conn: pymysql.connections.Connection = gcp_connector.connect(
+        instance, "pymysql",
+        user=args.sqluser,
+        password=args.sqlpass,
+        db=db_name
+    )
+    return conn
+
+cloud_engine = db.create_engine("mysql+pymysql://", creator=getcloudconn, pool_recycle=60 * 5, pool_pre_ping=True)
+cloud_conn = cloud_engine.connect()
 
 max_retries = 10
 def query_europepmc(endpoint, request_params, retry_count=0):
@@ -54,27 +77,34 @@ def generate_json_file(c):
 
 # manually create dictionary of indexed accessions, mapped to GBC database resources
 accession_types = json.load(open(args.accession_types, 'r'))
-acc_query = f"({' OR '.join([f"ACCESSION_TYPE:{at}" for at in accession_types])})"
+acc_query = "(%s)" % ' OR '.join([f"ACCESSION_TYPE:{at}" for at in accession_types])
 epmc_fields = [
     'pmid', 'pmcid', 'title', 'authorList', 'authorString', 'journalInfo', 'grantsList',
     'keywordList', 'meshHeadingList', 'citedByCount', 'hasTMAccessionNumbers'
 ]
 
-if os.path.exists(args.cursor_file):
-    with open(args.cursor_file, 'r') as f:
-        lines = f.readlines()
-        last_line = lines[-1].strip() if lines else None
-        if last_line:
-            cursor, c = last_line.split(', ')
-            c = int(c)
-        else:
-            cursor, c = None, 1
+# if os.path.exists(args.cursor_file):
+#     with open(args.cursor_file, 'r') as f:
+#         lines = f.readlines()
+#         last_line = lines[-1].strip() if lines else None
+#         if last_line:
+#             cursor, c = last_line.split(', ')
+#             c = int(c)
+#         else:
+#             cursor, c = None, 1
+# else:
+#     cursor, c = None, 1
+# cursors_out = open(f"{args.cursor_file}", 'a')
+
+db_cursors = cloud_conn.execute(db.text("SELECT cursor_mark, cursor_id FROM tmp_cursor_tracking ORDER BY time DESC LIMIT 1")).fetchone()
+if db_cursors:
+    cursor, c = db_cursors
+    c = int(c)
 else:
     cursor, c = None, 1
-cursors_out = open(f"{args.cursor_file}", 'a')
 
 epmc_base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest"
-more_data, limit = True, args.limit
+more_data = True
 while more_data:
     search_params = {
         'query': acc_query, 'resultType': 'core',
@@ -104,4 +134,6 @@ while more_data:
     if not cursor or limit <= 0:
         more_data = False
     else:
-        cursors_out.write(f"{cursor}, {c}\n")
+        # cursors_out.write(f"{cursor}, {c}\n")
+        cloud_conn.execute(db.text(f"INSERT INTO tmp_cursor_tracking (cursor_mark, cursor_id) VALUES ('{cursor}', {c})"))
+        cloud_conn.commit()

@@ -5,8 +5,6 @@ import time
 import argparse
 import json
 
-from pprint import pprint
-
 import requests
 import globalbiodata as gbc
 
@@ -16,10 +14,13 @@ import sqlalchemy as db
 
 
 parser = argparse.ArgumentParser(description='Load data to GBC')
-parser.add_argument('--db', type=str, help='Database to use (format: instance_name/db_name)', required=True)
 parser.add_argument('--json', type=str, help='Path to JSON file with data', required=True)
 parser.add_argument('--accession-types', type=str, help='Path to JSON file with accession types', required=True)
 parser.add_argument('--summary', type=str, help='Path for summary file output', required=True)
+
+parser.add_argument('--db', type=str, help='Database to use (format: instance_name/db_name)', required=True)
+parser.add_argument('--sqluser', type=str, help='SQL user', default=os.environ.get("CLOUD_SQL_USER"))
+parser.add_argument('--sqlpass', type=str, help='SQL password', default=os.environ.get("CLOUD_SQL_PASSWORD"))
 
 parser.add_argument('--debug', action='store_true', help='Debug mode')
 # parser.add_argument('--dry-run', action='store_true', help='Dry run mode')
@@ -31,8 +32,8 @@ instance, db_name = args.db.split('/')
 def getcloudconn() -> pymysql.connections.Connection:
     conn: pymysql.connections.Connection = gcp_connector.connect(
         instance, "pymysql",
-        user=os.environ.get("CLOUD_SQL_USER"),
-        password=os.environ.get("CLOUD_SQL_PASSWORD"),
+        user=args.sqluser,
+        password=args.sqlpass,
         db=db_name
     )
     return conn
@@ -106,6 +107,8 @@ def get_gbc_resource(dbname):
     if isinstance(accession_types.get(mapped_dbname), int):
         gbc_resource = gbc.fetch_resource({'id': accession_types.get(mapped_dbname)}, expanded=False, engine=cloud_engine)
         accession_types[mapped_dbname] = gbc_resource
+        if not gbc_resource:
+            raise ValueError(f"Error: No GBC resource found for {dbname} (-> {mapped_dbname})")
         return gbc_resource
     else:
         try:
@@ -174,7 +177,7 @@ for pub in publications.get('results'):
             dblink['gbc_db'] = gbc_db
             dblink['gbc_db_str'] = gbc_db.__str__()
 
-            pprint(dblink)
+            # pprint(dblink)
 
             gbc_acc = gbc.Accession({
                 'accession': dblink.get('accession'), 'resource': gbc_db,
@@ -182,7 +185,7 @@ for pub in publications.get('results'):
                 'prediction': prediction, 'publications': [gbc_pub]
             })
 
-            print(gbc_acc)
+            # print(gbc_acc)
             gbc_acc.write(engine=cloud_engine, debug=args.debug)
             link_types[gbc_db.short_name] = link_types.get(gbc_db.short_name, 0) + 1
 
