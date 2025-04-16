@@ -5,7 +5,6 @@ from datetime import datetime
 import sqlalchemy as db
 from sqlalchemy.dialects.mysql import insert # for on_duplicate_key_update
 
-from pprint import pprint
 import locationtagger
 import googlemaps
 
@@ -51,10 +50,10 @@ class URL:
         # End result should be a list of ConnectionStatus objs.
         if not u.get('status') or len(u.get('status')) == 0:
             cs = []
-        elif type(u.get('status')) == 'list':
-            if type(u.get('status')[0]) == 'dict':
+        elif type(u.get('status')) is list:
+            if type(u.get('status')[0]) is dict:
                 cs = [ConnectionStatus(s) for s in u.get('status')]
-            elif type(u.get('status')[0]) == 'ConnectionStatus':
+            elif type(u.get('status')[0]) is ConnectionStatus:
                 cs = u.get('status')
         else:
             cs = [ConnectionStatus({'url_id':self.id, 'status':u.get('url_status'), 'date':u.get('connection_date')})]
@@ -168,14 +167,14 @@ class Resource:
         self.full_name = r.get('full_name')
 
         r2 = {k:r[k] for k in r.keys() if k!='id'} # copy input and remove id to avoid propagating it to other objects
-        self.url = URL(r2) if type(r.get('url')) == str else r.get('url')
+        self.url = URL(r2) if type(r.get('url')) is str else r.get('url')
         self.prediction = r.get('prediction') or Prediction(r2)
         self.prediction_metadata = r.get('resource_prediction_metadata') or r.get('prediction_metadata')
         self.is_gcbr = r.get('is_gcbr')
         self.is_latest = r.get('is_latest')
 
         if r.get('grants'):
-            self.grants = [Grant(r2)] if type(r.get('grants')[0]) == str else r.get('grants')
+            self.grants = [Grant(r2)] if type(r.get('grants')[0]) is str else r.get('grants')
         elif r.get('ext_grant_ids') and r.get('grant_agencies'):
             self.grants = [Grant({'ext_grant_id':g, 'grant_agency':ga}) for g, ga in zip(r.get('ext_grant_ids').split(','), r.get('grant_agencies').split(','))]
         else:
@@ -278,7 +277,7 @@ class ConnectionStatus:
             self.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.is_latest = 1
 
-        if c.get('is_online') == None:
+        if c.get('is_online') is None:
             self.is_online = self.status[:18] not in ['404', '500', 'HTTPConnectionPool']
         else:
             self.is_online = c.get('is_online')
@@ -345,7 +344,7 @@ class Publication:
         self.keywords = p.get('keywords')
 
         if p.get('grants'):
-            self.grants = [Grant(p)] if type(p.get('grants')[0]) == str else p.get('grants')
+            self.grants = [Grant(p)] if type(p.get('grants')[0]) is str else p.get('grants')
         elif p.get('ext_grant_ids') and p.get('grant_agencies'):
             self.grants = [Grant({'ext_grant_id':g, 'grant_agency':ga}) for g, ga in zip(p.get('ext_grant_ids').split(','), p.get('grant_agencies').split(','))]
         else:
@@ -364,7 +363,7 @@ class Publication:
     def write(self, conn=None, engine=None, debug=False, force=False):
         self_dict = self.__dict__.copy()
         pub_grants = self_dict.pop('grants')
-        new_pub_id = insert_into_table('publication', self_dict, conn=conn, engine=engine, debug=debug)
+        new_pub_id = insert_into_table('publication', self_dict, conn=conn, engine=engine, debug=debug, filter_long_data=True)
         self.id = new_pub_id
 
         if pub_grants:
@@ -403,9 +402,9 @@ class Grant:
         self.id = g.get('id')
         self.ext_grant_id = g.get('ext_grant_id')
 
-        if type(g.get('grant_agency')) == str:
+        if type(g.get('grant_agency')) is str:
             self.grant_agency = GrantAgency({'name': g.get('grant_agency')})
-        elif type(g.get('grant_agency')) == GrantAgency:
+        elif type(g.get('grant_agency')) is GrantAgency:
             self.grant_agency = g.get('grant_agency')
         else:
             raise ValueError(f"Grant Agency must be a string or GrantAgency object. Got: {g.get('grant_agency')} (type:{type(g.get('grant_agency'))}).")
@@ -618,11 +617,36 @@ def remove_key_fields(table, conn, data): # also remove empty values
 
 def stringify_data(data):
     for k, v in data.items():
-        if type(v) == list:
+        if type(v) is list:
             data[k] = '; '.join(v)
     return data
 
-def insert_into_table(table_name, data, conn=None, engine=None, debug=False):
+def _get_db_name(engine):
+    db_name = engine.url.database
+    if db_name is None:
+        # grab from the raw connection
+        conn = engine.connect()
+        raw_conn = conn.connection.connection
+        db_name = raw_conn.db.decode()
+
+    return db_name
+
+_max_lens = {}
+def _get_max_len(col_name, table_name, engine):
+    col_key = f"{table_name}.{col_name}"
+    if col_key not in _max_lens:
+        db_name = _get_db_name(engine)
+        max_len_sql = f"""
+        SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = '{db_name}' AND TABLE_NAME = '{table_name}'
+        """
+        conn = engine.connect()
+        max_len_result = conn.execute(db.text(max_len_sql)).fetchall()
+        for result in max_len_result:
+            _max_lens[col_key] = result[0]
+    return _max_lens.get(col_key, None)
+
+def insert_into_table(table_name, data, conn=None, engine=None, debug=False, filter_long_data=False):
     metadata_obj = db.MetaData()
     table = db.Table(table_name, metadata_obj, autoload_with=engine)
     data = stringify_data(data)
@@ -633,6 +657,14 @@ def insert_into_table(table_name, data, conn=None, engine=None, debug=False):
 
     if conn is None:
         conn = engine.connect()
+
+    if filter_long_data:
+        for k, v in data.items():
+            this_max_len = _get_max_len(k, table_name, engine)
+            if v and this_max_len and type(v) is str and len(v) > this_max_len:
+                # insert into long_text table and replace with reference
+                longtext_id = insert_into_table('long_text', {'text': v}, engine=engine, debug=debug)
+                data[k] = f"long_text({longtext_id})"
 
     trans = conn.begin()  # Begin a transaction
     try:
@@ -719,7 +751,7 @@ def select_from_table(table_name, data={}, conn=None, engine=None, debug=False):
 
     wheres = []
     for c in data.keys():
-        if type(data[c]) == list:
+        if type(data[c]) is list:
             wheres.append(table.columns.get(c).in_(data[c]))
         else:
             wheres.append(table.columns.get(c) == data[c])
@@ -749,11 +781,11 @@ def fetch_resource(query, expanded=True, conn=None, engine=None, debug=False):
         if expanded:
             pub_ids = select_from_table('resource_publication', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
             r['publications'] = fetch_publication({'id':[p['publication_id'] for p in pub_ids]}, conn=conn, engine=engine, debug=debug)
-            r['publications'] = [r['publications']] if type(r['publications']) != list else r['publications']
+            r['publications'] = [r['publications']] if type(r['publications']) is not list else r['publications']
 
             grant_ids = select_from_table('resource_grant', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
             r['grants'] = fetch_grant({'id':[g['grant_id'] for g in grant_ids]}, conn=conn, engine=engine, debug=debug)
-            r['grants'] = [r['grants']] if (r['grants'] is not None and type(r['grants']) != list) else r['grants']
+            r['grants'] = [r['grants']] if (r['grants'] is not None and type(r['grants']) is not list) else r['grants']
 
         resources.append(Resource(r))
 
@@ -771,7 +803,7 @@ def fetch_url(query, expanded=True, conn=None, engine=None, debug=False):
     for u in url_raw:
         if expanded:
             u['status'] = fetch_connection_status({'url_id':u['id']}, conn=conn, engine=engine, debug=debug)
-            u['status'] = [u['status']] if (u['status'] is not None and type(u['status']) != list) else u['status']
+            u['status'] = [u['status']] if (u['status'] is not None and type(u['status']) is not list) else u['status']
         urls.append(URL(u))
 
     return urls if len(urls) > 1 else urls[0]
@@ -814,7 +846,7 @@ def fetch_publication(query, expanded=True, conn=None, engine=None, debug=False)
 
         if expanded:
             p['grants'] = fetch_grant({'id':[g['grant_id'] for g in grant_ids]}, conn=conn, engine=engine, debug=debug)
-            p['grants'] = [p['grants']] if (p['grants'] is not None and type(p['grants']) != list) else p['grants']
+            p['grants'] = [p['grants']] if (p['grants'] is not None and type(p['grants']) is not list) else p['grants']
 
         publications.append(Publication(p))
 
@@ -857,10 +889,11 @@ def fetch_all_grant_agencies(conn=None, engine=None, debug=False):
 def new_publication_from_EuropePMC_result(epmc_result, google_maps_api_key=None):
     affiliations, countries = _extract_affiliations(epmc_result, google_maps_api_key=google_maps_api_key)
     new_publication = Publication({
-        'publication_title': epmc_result.get('title', ''), 'pubmed_id': epmc_result.get('pmid', ''), 'pmc_id': epmc_result.get('pmcid', ''),
-        'publication_date': epmc_result.get('journalInfo', {}).get('printPublicationDate'), 'grants': _extract_grants(epmc_result),
-        'keywords': '; '.join(_extract_keywords(epmc_result)), 'citation_count': epmc_result.get('citedByCount', 0),
-        'authors': epmc_result.get('authorString', ''), 'affiliation': affiliations, 'affiliation_countries': countries
+        'publication_title': epmc_result.get('title', ''), 'pubmed_id': epmc_result.get('pmid', None), 'pmc_id': epmc_result.get('pmcid', ''),
+        'publication_date': epmc_result.get('journalInfo', {}).get('printPublicationDate') or epmc_result.get('firstPublicationDate'),
+        'grants': _extract_grants(epmc_result),'keywords': '; '.join(_extract_keywords(epmc_result)),
+        'citation_count': epmc_result.get('citedByCount', 0), 'authors': epmc_result.get('authorString', ''), 'affiliation': affiliations,
+        'affiliation_countries': countries
     })
     return new_publication
 
@@ -910,6 +943,12 @@ def _extract_affiliations(metadata, google_maps_api_key=None):
     # extract author affiliations & countries
     affiliations, countries = [], []
     affiliation_dict, countries_dict = {}, {}
+    custom_country_mappings = {
+        "People's Republic of China": "China", "Macao": "China",
+        "United States of America": "United States", 'Russian Federation': 'Russia',
+        'Kingdom of Saudi Arabia': 'Saudi Arabia', 'Republic of Singapore': 'Singapore'
+    }
+
     try:
         author_list = metadata['authorList']['author']
         for author in author_list:
@@ -918,9 +957,9 @@ def _extract_affiliations(metadata, google_maps_api_key=None):
                 clean_a = _clean_affilation(a['affiliation'])
                 affiliation_dict[clean_a] = 1
                 a_countries = _find_country(clean_a, google_maps_api_key=google_maps_api_key)
-                countries_dict.update({x:1 for x in a_countries[0]})
+                countries_dict.update({(custom_country_mappings.get(x) or x):1 for x in a_countries[0]})
         affiliations = list(affiliation_dict.keys())
-        countries = list(countries_dict.keys())
+        countries = sorted(list(countries_dict.keys()))
     except KeyError:
         pass
 
@@ -928,6 +967,8 @@ def _extract_affiliations(metadata, google_maps_api_key=None):
 
 def _find_country(s, google_maps_api_key=None):
     # print(f"Searching for countries in '{s}'")
+    if not s:
+        return ([], '')
 
     # location search
     place_entity = locationtagger.find_locations(text = s)
