@@ -73,13 +73,13 @@ CREATE TABLE `resource`(
 
 CREATE TABLE `publication`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `title` VARCHAR(500) NOT NULL,
-    `pubmed_id` BIGINT NOT NULL,
+    `title` VARCHAR(1200) NOT NULL,
+    `pubmed_id` BIGINT,
     `pmc_id` VARCHAR(255),
-    `publication_date` DATE NOT NULL,
+    `publication_date` DATE,
     `authors` TEXT NOT NULL,
-    `affiliation` TEXT NOT NULL,
-    `affiliation_countries` VARCHAR(255),
+    `affiliation` TEXT,
+    `affiliation_countries` VARCHAR(800),
     `citation_count` INT NOT NULL,
     `keywords` TEXT,
     `email` TEXT,
@@ -134,3 +134,9 @@ CREATE TABLE `publication_grant`(
     FOREIGN KEY(`publication_id`) REFERENCES publication(`id`) ON DELETE CASCADE,
     FOREIGN KEY(`grant_id`) REFERENCES `grant`(`id`) ON DELETE CASCADE
 );
+
+CREATE TABLE `long_text` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `text` MEDIUMTEXT NOT NULL,
+  PRIMARY KEY (`id`)
+)
