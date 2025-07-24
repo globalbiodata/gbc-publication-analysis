@@ -1,0 +1,10 @@
+pymysql
+cloud-sql-python-connector[pymysql]
+sqlalchemy
+pandas
+datetime
+locationtagger
+googlemaps
+requests
+argparse
+collections

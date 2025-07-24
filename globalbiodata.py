@@ -90,15 +90,15 @@ class URL:
         del_result = delete_from_table('url', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
 
-class Prediction:
+class Version:
     """
-    Prediction information
+    Version information
 
-    `id` : Database ID for Prediction
-    `name` : Name of prediction pipeline/type
+    `id` : Database ID for Version
+    `name` : Name of version/pipeline/type
     `date` : Date of run
-    `user` : User who ran prediction pipeline
-    `additional_metadata` : Additional prediction data in JSON format
+    `user` : User who ran pipeline
+    `additional_metadata` : Additional data in JSON format
     """
     id:int
     name:str
@@ -108,18 +108,18 @@ class Prediction:
 
     def __init__(self, p):
         self.id = p.get('id')
-        self.name = p.get('prediction_name') or p.get('name')
-        self.date = p.get('prediction_date') or p.get('date')
-        self.user = p.get('prediction_user') or p.get('user')
-        self.additional_metadata = p.get('additional_prediction_metadata') or p.get('additional_metadata')
+        self.name = p.get('version_name') or p.get('name')
+        self.date = p.get('version_date') or p.get('date')
+        self.user = p.get('version_user') or p.get('user')
+        self.additional_metadata = p.get('additional_version_metadata') or p.get('additional_metadata')
 
     def __str__(self):
-        pred_str = f"Prediction(id={self.id}, name={self.name}, date={self.date}, user={self.user}, additional_metadata={self.additional_metadata})"
-        return pred_str
+        version_str = f"Version(id={self.id}, name={self.name}, date={self.date}, user={self.user}, additional_metadata={self.additional_metadata})"
+        return version_str
 
     def write(self, conn=None, engine=None, debug=False):
-        new_prediction_id = insert_into_table('prediction', self.__dict__, conn=conn, engine=engine, debug=debug)
-        self.id = new_prediction_id
+        new_version_id = insert_into_table('version', self.__dict__, conn=conn, engine=engine, debug=debug)
+        self.id = new_version_id
         return self.id
 
     def delete(self, conn=None, engine=None, debug=False):
@@ -127,9 +127,9 @@ class Prediction:
             conn = engine.connect()
 
         if not self.id:
-            raise ValueError("Prediction object must have an ID to delete.")
+            raise ValueError("Version object must have an ID to delete.")
 
-        del_result = delete_from_table('prediction', {'id':self.id}, conn=conn, engine=engine, debug=debug)
+        del_result = delete_from_table('version', {'id':self.id}, conn=conn, engine=engine, debug=debug)
         return del_result
 
 class Resource:
@@ -141,7 +141,7 @@ class Resource:
     `common_name`: Common name of resource
     `full_name`: Full name of resource
     `url`: URL object
-    `prediction`: Prediction object
+    `version`: Version object
     `prediction_metadata`: Additional prediction metadata in JSON format
     `publications`: Publication object(s)
     `grants`: Grant object(s)
@@ -153,7 +153,7 @@ class Resource:
     common_name:str
     full_name:str
     url:URL
-    prediction:Prediction
+    version:Version
     prediction_metadata:str
     publications:list
     grants:list
@@ -168,7 +168,7 @@ class Resource:
 
         r2 = {k:r[k] for k in r.keys() if k!='id'} # copy input and remove id to avoid propagating it to other objects
         self.url = URL(r2) if type(r.get('url')) is str else r.get('url')
-        self.prediction = r.get('prediction') or Prediction(r2)
+        self.version = r.get('version') or Version(r2)
         self.prediction_metadata = r.get('resource_prediction_metadata') or r.get('prediction_metadata')
         self.is_gcbr = r.get('is_gcbr')
         self.is_latest = r.get('is_latest')
@@ -189,7 +189,7 @@ class Resource:
         resource_str = ', '.join([
             f"id={self.id}", f"short_name={self.short_name}", f"common_name={self.common_name}", f"full_name={self.full_name}",
             f"is_gcbr={self.is_gcbr}", f"is_latest={self.is_latest}", f"url={self.url.__str__()}",
-            f"prediction={self.prediction.__str__()}", f"prediction_metadata={self.prediction_metadata}",
+            f"version={self.version.__str__()}", f"prediction_metadata={self.prediction_metadata}",
             f"publications=[{', '.join([p.__str__() for p in self.publications])}]" if self.publications else "publications=[]",
             f"grants=[{', '.join(g.__str__() for g in self.grants)}]" if self.grants else "grants=[]"
         ])
@@ -200,9 +200,9 @@ class Resource:
             url_id = self.url.write(conn=conn, engine=engine, debug=debug)
             self.url.id = url_id
 
-        if not self.prediction.id or force:
-            prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
-            self.prediction.id = prediction_id
+        if not self.version.id or force:
+            version_id = self.version.write(conn=conn, engine=engine, debug=debug)
+            self.version.id = version_id
 
         # set is_latest to 0 for other versions of this resource
         if self.is_latest:
@@ -212,7 +212,7 @@ class Resource:
 
         resource_cols = {
             'id':self.id, 'short_name':self.short_name, 'common_name':self.common_name, 'full_name':self.full_name,
-            'url_id':self.url.id, 'prediction_id':self.prediction.id, 'prediction_metadata':self.prediction_metadata,
+            'url_id':self.url.id, 'version_id':self.version.id, 'prediction_metadata':self.prediction_metadata,
             'is_gcbr':self.is_gcbr, 'is_latest':self.is_latest
         }
         new_resource_id = insert_into_table('resource', resource_cols, conn=conn, engine=engine, debug=debug)
@@ -493,31 +493,31 @@ class Accession:
     `accession`: Accession ID
     `resource`: Resource object
     `publications`: Publication object(s)
-    `prediction`: Prediction object
+    `version`: Version object
     `url`: URL string
-    `prediction_metadata`: Additional prediction metadata in JSON format
+    `additional_metadata`: Additional version metadata in JSON format
     """
     accession:str
     resource:Resource
     publications:list
-    prediction:Prediction
+    version:Version
     url:str
-    prediction_metadata:str
+    additional_metadata:str
 
     def __init__(self, a):
         self.accession = a.get('accession')
         self.resource = a.get('resource') or Resource(extract_fields_by_type(a, 'resource'))
         self.publications = a.get('publications') or [Publication(extract_fields_by_type(a, 'publication'))]
-        self.prediction = a.get('prediction') or Prediction(extract_fields_by_type(a, 'prediction'))
+        self.version = a.get('version') or Version(extract_fields_by_type(a, 'version'))
         self.url = a.get('url')
-        self.prediction_metadata = a.get('prediction_metadata')
+        self.additional_metadata = a.get('additional_metadata')
 
     def __str__(self):
         accession_str = ', '.join([
             f"accession={self.accession}", f"resource={self.resource.__str__()}",
-            f"prediction={self.prediction.__str__()}", f"prediction_metadata={self.prediction_metadata}",
+            f"version={self.version.__str__()}", f"additional_metadata={self.additional_metadata}",
             f"publications=[{', '.join([p.__str__() for p in self.publications])}]" if self.publications else "publications=[]",
-            f"url={self.url}", f"prediction_metadata={self.prediction_metadata}"
+            f"url={self.url}", f"additional_metadata={self.additional_metadata}"
         ])
         return f"Accession({accession_str})"
 
@@ -526,13 +526,13 @@ class Accession:
             resource_id = self.resource.write(conn=conn, engine=engine, debug=debug)
             self.resource.id = resource_id
 
-        if not self.prediction.id or force:
-            prediction_id = self.prediction.write(conn=conn, engine=engine, debug=debug)
-            self.prediction.id = prediction_id
+        if not self.version.id or force:
+            version_id = self.version.write(conn=conn, engine=engine, debug=debug)
+            self.version.id = version_id
 
         accession_cols = {
-            'accession':self.accession, 'resource_id':self.resource.id, 'prediction_id':self.prediction.id,
-            'url':self.url, 'prediction_metadata':self.prediction_metadata
+            'accession':self.accession, 'resource_id':self.resource.id, 'version_id':self.version.id,
+            'url':self.url, 'additional_metadata':self.additional_metadata
         }
         insert_into_table('accession', accession_cols, conn=conn, engine=engine, debug=debug)
 
@@ -556,16 +556,86 @@ class Accession:
         ap_del = delete_from_table('accession_publication', {'accession':self.accession}, conn=conn, engine=engine, debug=debug)
         ac_del = delete_from_table('accession', {'accession':self.accession}, conn=conn, engine=engine, debug=debug)
 
+class ResourceMention:
+    """
+    Link between a publication and a resource, with match info.
+
+    `publication`: Publication object
+    `resource`: Resource object
+    `version`: Version object
+    `matched_alias`: alias string that matched
+    `match_count`: number of matches
+    `mean_confidence`: mean confidence score
+    """
+    publication: Publication
+    resource: Resource
+    version: Version
+    matched_alias: str
+    match_count: int
+    mean_confidence: float
+
+    def __init__(self, m):
+        self.publication = m.get('publication') or Publication(extract_fields_by_type(m, 'publication'))
+        self.resource = m.get('resource') or Resource(extract_fields_by_type(m, 'resource'))
+        self.version = m.get('version') or Version(extract_fields_by_type(m, 'version'))
+        self.matched_alias = m.get('matched_alias')
+        self.match_count = m.get('match_count', 0)
+        self.mean_confidence = m.get('mean_confidence', 0.0)
+
+    def __str__(self):
+        return (
+            f"ResourceMention(pub={self.publication.__str__()}, res={self.resource.__str__()}, "
+            f"ver={self.version.__str__()}, alias='{self.matched_alias}', "
+            f"count={self.match_count}, mean_conf={self.mean_confidence})"
+        )
+
+    def write(self, conn=None, engine=None, debug=False, force=False):
+        if not self.publication.id or force:
+            pub_id = self.publication.write(conn=conn, engine=engine, debug=debug)
+            self.publication.id = pub_id
+
+        if not self.resource.id or force:
+            res_id = self.resource.write(conn=conn, engine=engine, debug=debug)
+            self.resource.id = res_id
+
+        if not self.version.id or force:
+            ver_id = self.version.write(conn=conn, engine=engine, debug=debug)
+            self.version.id = ver_id
+
+        mention_cols = {
+            'publication_id': self.publication.id,
+            'resource_id': self.resource.id,
+            'version_id': self.version.id,
+            'matched_alias': self.matched_alias,
+            'match_count': self.match_count,
+            'mean_confidence': self.mean_confidence,
+        }
+        insert_into_table('resource_mention', mention_cols, conn=conn, engine=engine, debug=debug)
+
+    def delete(self, conn=None, engine=None, debug=False):
+        if conn is None:
+            conn = engine.connect()
+        if not self.publication_id or not self.resource_id:
+            raise ValueError("ResourceMention requires publication_id and resource_id to delete.")
+        del_result = delete_from_table(
+            'resource_mention',
+            {'publication_id': self.publication.id, 'resource_id': self.resource.id, 'matched_alias': self.matched_alias},
+            conn=conn,
+            engine=engine,
+            debug=debug
+        )
+        return del_result
+
 # ---------------------------------------------------------------------------- #
 # Database helper methods                                                      #
 # ---------------------------------------------------------------------------- #
 
 # manually defined primary and unique keys for tables
 table_keys = {
-    'resource': {'pk': ['id'], 'uk': ['short_name', 'url_id', 'prediction_id']},
+    'resource': {'pk': ['id'], 'uk': ['short_name', 'url_id', 'version_id']},
     'url': {'pk': ['id'], 'uk': ['url']},
     'connection_status': {'pk': ['url_id', 'date'], 'uk': []},
-    'prediction': {'pk': ['id'], 'uk': ['name', 'date']},
+    'version': {'pk': ['id'], 'uk': ['name', 'date']},
     'publication': {'pk': ['id'], 'uk': ['pubmed_id']},
     'grant': {'pk': ['id'], 'uk': ['ext_grant_id', 'grant_agency_id']},
     'grant_agency': {'pk': ['id'], 'uk': ['name']},
@@ -574,6 +644,7 @@ table_keys = {
     'publication_grant': {'pk': ['publication_id', 'grant_id'], 'uk': []},
     'accession': {'pk': ['accession'], 'uk': []},
     'accession_publication': {'pk': ['accession', 'publication_id'], 'uk': []},
+    'resource_mention': {'pk': ['publication_id', 'resource_id', 'matched_alias'], 'uk': []},
 }
 
 def get_primary_keys(table, conn):
@@ -776,7 +847,7 @@ def fetch_resource(query, expanded=True, conn=None, engine=None, debug=False):
     resources = []
     for r in resource_raw:
         r['url'] = fetch_url({'id':r['url_id']}, conn=conn, engine=engine, debug=debug)
-        r['prediction'] = fetch_prediction({'id':r['prediction_id']}, conn=conn, engine=engine, debug=debug)
+        r['version'] = fetch_version({'id':r['version_id']}, conn=conn, engine=engine, debug=debug)
 
         if expanded:
             pub_ids = select_from_table('resource_publication', {'resource_id':r['id']}, conn=conn, engine=engine, debug=debug)
@@ -823,17 +894,17 @@ def fetch_connection_status(query, conn=None, engine=None, debug=False):
 def fetch_all_connection_statuses(conn=None, engine=None, debug=False):
     return fetch_connection_status({}, conn=conn, engine=engine, debug=debug)
 
-def fetch_prediction(query, conn=None, engine=None, debug=False):
-    prediction_raw = select_from_table('prediction', query, conn=conn, engine=engine, debug=debug)
-    if len(prediction_raw) == 0:
+def fetch_version(query, conn=None, engine=None, debug=False):
+    version_raw = select_from_table('version', query, conn=conn, engine=engine, debug=debug)
+    if len(version_raw) == 0:
         return None
 
-    predictions = [Prediction(p) for p in prediction_raw]
+    versions = [Version(p) for p in version_raw]
 
-    return predictions if len(predictions) > 1 else predictions[0]
+    return versions if len(versions) > 1 else versions[0]
 
-def fetch_all_predictions(conn=None, engine=None, debug=False):
-    return fetch_prediction({}, conn=conn, engine=engine, debug=debug)
+def fetch_all_versions(conn=None, engine=None, debug=False):
+    return fetch_version({}, conn=conn, engine=engine, debug=debug)
 
 def fetch_publication(query, expanded=True, conn=None, engine=None, debug=False):
     publication_raw = select_from_table('publication', query, conn=conn, engine=engine, debug=debug)
