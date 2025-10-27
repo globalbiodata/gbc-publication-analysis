@@ -1,0 +1,156 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE url(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL,
+    url_country TEXT,
+    url_coordinates TEXT,
+    wayback_url TEXT,
+    UNIQUE(url)
+);
+
+CREATE TABLE connection_status(
+    url_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    date TEXT NOT NULL DEFAULT (datetime('now')),
+    is_online INTEGER NOT NULL DEFAULT 0,
+    is_latest INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY(url_id, date),
+    FOREIGN KEY(url_id) REFERENCES url(id)
+);
+
+CREATE TABLE grant_agency(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    country TEXT,
+    parent_agency_id INTEGER,
+    representative_agency_id INTEGER,
+    UNIQUE(name),
+    FOREIGN KEY (representative_agency_id) REFERENCES grant_agency (id),
+    FOREIGN KEY (parent_agency_id) REFERENCES grant_agency (id)
+);
+
+CREATE TABLE grant(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ext_grant_id TEXT,
+    grant_agency_id INTEGER NOT NULL,
+    UNIQUE(ext_grant_id, grant_agency_id),
+    FOREIGN KEY(grant_agency_id) REFERENCES grant_agency(id)
+);
+
+CREATE TABLE version(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    date TEXT NOT NULL,
+    user TEXT NOT NULL DEFAULT 'user()',
+    additional_metadata TEXT,
+    UNIQUE(name, date)
+);
+
+CREATE TABLE resource(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    short_name TEXT NOT NULL,
+    common_name TEXT,
+    full_name TEXT,
+    url_id INTEGER NOT NULL,
+    version_id INTEGER NOT NULL,
+    prediction_metadata TEXT,
+    is_gcbr INTEGER NOT NULL,
+    is_latest INTEGER NOT NULL,
+    has_commercial_terms INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(short_name, url_id, version_id),
+    FOREIGN KEY(url_id) REFERENCES url(id),
+    FOREIGN KEY(version_id) REFERENCES version(id)
+);
+
+CREATE TABLE publication(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    pubmed_id INTEGER,
+    pmc_id TEXT,
+    publication_date TEXT,
+    authors TEXT NOT NULL,
+    affiliation TEXT,
+    affiliation_countries TEXT,
+    citation_count INTEGER NOT NULL,
+    keywords TEXT,
+    email TEXT,
+    UNIQUE(pubmed_id),
+    UNIQUE(pmc_id)
+);
+
+CREATE TABLE accession(
+    accession TEXT NOT NULL,
+    version_id INTEGER NOT NULL,
+    resource_id INTEGER NOT NULL,
+    url TEXT,
+    prediction_metadata TEXT,
+    PRIMARY KEY(accession, version_id, resource_id),
+    FOREIGN KEY(resource_id) REFERENCES resource(id),
+    FOREIGN KEY(version_id) REFERENCES version(id)
+);
+
+CREATE TABLE accession_publication(
+    accession TEXT NOT NULL,
+    publication_id INTEGER NOT NULL,
+    PRIMARY KEY(accession, publication_id),
+    FOREIGN KEY(accession) REFERENCES accession(accession),
+    FOREIGN KEY(publication_id) REFERENCES publication(id)
+);
+
+CREATE TABLE resource_publication(
+    resource_id INTEGER NOT NULL,
+    publication_id INTEGER NOT NULL,
+    PRIMARY KEY(resource_id, publication_id),
+    FOREIGN KEY(resource_id) REFERENCES resource(id) ON DELETE CASCADE,
+    FOREIGN KEY(publication_id) REFERENCES publication(id) ON DELETE CASCADE
+);
+
+CREATE TABLE resource_grant(
+    resource_id INTEGER NOT NULL,
+    grant_id INTEGER NOT NULL,
+    PRIMARY KEY(resource_id, grant_id),
+    FOREIGN KEY(resource_id) REFERENCES resource(id) ON DELETE CASCADE,
+    FOREIGN KEY(grant_id) REFERENCES grant(id) ON DELETE CASCADE
+);
+
+CREATE TABLE publication_grant(
+    publication_id INTEGER NOT NULL,
+    grant_id INTEGER NOT NULL,
+    PRIMARY KEY(publication_id, grant_id),
+    FOREIGN KEY(publication_id) REFERENCES publication(id) ON DELETE CASCADE,
+    FOREIGN KEY(grant_id) REFERENCES grant(id) ON DELETE CASCADE
+);
+
+CREATE TABLE resource_mention (
+    publication_id INTEGER NOT NULL,
+    resource_id INTEGER NOT NULL,
+    matched_alias TEXT NOT NULL,
+    match_count INTEGER,
+    mean_confidence DECIMAL(5,4),
+    version_id INTEGER NOT NULL,
+    PRIMARY KEY (publication_id, resource_id, matched_alias),
+    FOREIGN KEY (publication_id) REFERENCES publication(id) ON DELETE CASCADE,
+    FOREIGN KEY (resource_id) REFERENCES resource(id) ON DELETE CASCADE,
+    FOREIGN KEY (version_id) REFERENCES version(id) ON DELETE CASCADE
+);
+
+CREATE TABLE long_text (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL
+);
+
+-- Optional: helpful indexes (SQLite ignores KEY inside CREATE TABLE)
+CREATE INDEX idx_grant_agency_parent ON grant_agency(parent_agency_id);
+CREATE INDEX idx_grant_agency_rep ON grant_agency(representative_agency_id);
+CREATE INDEX idx_resource_url ON resource(url_id);
+CREATE INDEX idx_resource_version ON resource(version_id);
+CREATE INDEX idx_pub_pubmed ON publication(pubmed_id);
+CREATE INDEX idx_pub_pmc ON publication(pmc_id);
+CREATE INDEX idx_accession_pub ON accession_publication(publication_id);
+CREATE INDEX idx_respub_pub ON resource_publication(publication_id);
+CREATE INDEX idx_resgrant_grant ON resource_grant(grant_id);
+CREATE INDEX idx_pubgrant_grant ON publication_grant(grant_id);
+CREATE INDEX idx_resmention_pub ON resource_mention(publication_id);
+CREATE INDEX idx_resmention_res ON resource_mention(resource_id);
+CREATE INDEX idx_resmention_ver ON resource_mention(version_id);

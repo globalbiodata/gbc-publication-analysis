@@ -1,0 +1,62 @@
+{
+    "pmid": "54321",
+    "pmcid": "PMC12345",
+    "title": "Very interesting article.",
+    "authorString": "Hide I, Padgett WL, Jacobson KA, Daly JW.",
+    "authorList": {
+        "author": [
+            {
+                "fullName": "Hide I",
+                "authorAffiliationDetailsList": {
+                    "authorAffiliation": [
+                        {
+                            "affiliation": "Center for Craic, Dublin, Ireland"
+                        }
+                    ]
+                }
+            },
+            {
+                "fullName": "Padgett WL",
+                "authorAffiliationDetailsList": {
+                    "authorAffiliation": [
+                        {
+                            "affiliation": "Department of Pharmacology, Denver, USA"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "journalInfo": { "printPublicationDate": "2022-02-01" },
+    "grantsList": {
+        "grant": [
+            { "grantId": "Z01 YTHO", "agency": "NIH" },
+            { "grantId": "Z99 MKAY", "agency": "EU" }
+        ]
+    },
+    "meshHeadingList": {
+        "meshHeading": [
+            {
+                "descriptorName": "Membranes",
+                "meshQualifierList": {
+                    "meshQualifier": [
+                        {
+                            "abbreviation": "EN",
+                            "qualifierName": "enzymology"
+                        }
+                    ]
+                }
+            },
+            { "descriptorName": "Animals" },
+            {
+                "descriptorName": "Phenethylamines",
+                "meshQualifierList": {
+                    "meshQualifier": [
+                        { "qualifierName": "pharmacology" }
+                    ]
+                }
+            }
+        ]
+    },
+    "citedByCount": 78
+}

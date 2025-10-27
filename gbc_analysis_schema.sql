@@ -75,7 +75,7 @@ CREATE TABLE `publication`(
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `title` VARCHAR(1200) NOT NULL,
     `pubmed_id` BIGINT,
-    `pmc_id` VARCHAR(255),
+    `pmc_id` VARCHAR(12),
     `publication_date` DATE,
     `authors` TEXT NOT NULL,
     `affiliation` TEXT,
@@ -84,7 +84,8 @@ CREATE TABLE `publication`(
     `keywords` TEXT,
     `email` TEXT,
 
-    UNIQUE(`pubmed_id`)
+    UNIQUE(`pubmed_id`),
+    UNIQUE(`pmc_id`)
 );
 
 CREATE TABLE `accession`(
