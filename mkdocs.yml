@@ -1,0 +1,62 @@
+site_name: GBC Publication Analysis API documentation
+site_description: Docs for globalbiodata and utilities
+site_url: https://globalbiodata.github.io/gbc-publication-analysis/
+repo_url: https://github.com/globalbiodata/gbc-publication-analysis
+repo_name: gbc-publication-analysis
+
+theme:
+  name: readthedocs
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Database Schema: schema.md
+  - API Reference:
+      - globalbiodata:
+        - Resource: api/globalbiodata_resource.md
+        - Publication: api/globalbiodata_publication.md
+        - Grant & GrantAgency: api/globalbiodata_grant.md
+        - URL & ConnectionStatus: api/globalbiodata_url.md
+        - Accession: api/globalbiodata_accession.md
+        - ResourceMention & MatchedAlias: api/globalbiodata_resource_mention.md
+        - Version: api/globalbiodata_version.md
+        - Utilities: api/globalbiodata_utils.md
+      - gbcutils:
+        - db: api/gbcutils_db.md
+        - europepmc: api/gbcutils_europepmc.md
+        - metadata: api/gbcutils_metadata.md
+        - scibert_classify: api/gbcutils_scibert.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            # Works well with Google-style docstrings
+            docstring_style: google
+            docstring_section_style: table  # nice tabular layout for attributes
+            # Nice rendering options
+            show_source: true
+            separate_signature: true
+            inherited_members: true
+            show_root_heading: true
+            heading_level: 2
+            filters: ["!^_"]  # hide private members
+
+watch:
+  - globalbiodata
+  - gbcutils
+
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+
+extra_css:
+  - css/extra.css

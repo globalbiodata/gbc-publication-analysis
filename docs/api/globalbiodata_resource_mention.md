@@ -1,0 +1,1 @@
+::: globalbiodata.resource_mention

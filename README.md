@@ -1,42 +1,32 @@
 # 🧭 Introduction / Background
 
-The <[Global Biodata Coalition](https://globalbiodata.org)> seeks to exchange knowledge and share strategies for supporting biodata resources. To develop an underlying evidence base to show the importance of biodata resources to the life sciences comminity at large, several data analyses were undertaken.
+The [Global Biodata Coalition](https://globalbiodata.org) seeks to exchange knowledge and share strategies for supporting biodata resources. To develop an underlying evidence base to show the importance of biodata resources to the life sciences comminity at large, several data analyses were undertaken. All were based on mining published scientific literature, with the help of Europe PMC's APIs.
 
-1. First, a global inventory
-2. Mentions
-3. Data citations
+### 1. A global inventory
+The aim here is to identify publications the describe a resources, and form a list of known biodata resources.
+
+### 2. Resource mentions
+Here, we wish to capture the usage of these inventory resources by detecting mentions of their names & aliases in open-access full-text articles. This seeks to capture the more informal type of resource citation (outside of official publication references and/or data citations).
+
+### 3. Data citations
+Finally, data from these resources can be cited directly by accession number (or other resource-dependent identifier). These are annotated as part of Europe PMC's text-mining service and have been imported into our database as an additional data source.
 
 # 🧱 Database Schema Overview
 
-The schema for our data analysis is fully described in the files `gbc_analysis_schema.sql*`.
+The project uses a relational schema to link publications, biodata resources, mentions, and data citations.
+At a high level:
 
-### Table overview:
-- `resource` : Describes a biodata resource
-- `version` : Describes the pipeline/process that identified the resource/accession. Means of versioning.
-- `accession` : Described identifier from a biodata resource, found in some published materials
-- `publication` : Describes published journal articles
-- `resource_publication` : Table to join resource and publication tables, allowing a many-to-many type of relationship
-- `url` : Describes URL of a resource
-- `connection_status` : Describes ping/connection information for a URL
-- `grant` : Describes grants associated with resources/publications and their agencies
-- `grant_agency` : Describes grant agencies and their relationship to each other
-- `resource_grant` : Table to join resource and grant tables, allowing a many-to-many type of relationship
-- `accession_publication` : Table to join accession and publication tables, allowing a many-to-many type of relationship
-- `publication_grant` : Table to join publication and grant tables, allowing a many-to-many type of relationship
-- `accession` : Holds data citations/accessions plus their associated metadata
-- `accession_publication` : Maps accessions to the publications they were found in
-- `resource_mention` : Links resources to publications that mentioned the resource's name
+- `publication` — article metadata
+- `resource` — biodata resources
+- `resource_mention` — text mentions
+- `accession` & `accession_publication` — data citations
 
+👉 [View the full interactive schema diagram](https://drawsql.app/teams/gbc-4/diagrams/gcb-publication-analysis-uber-schema)
+👉 [Read full schema documentation](https://your-username.github.io/gbc-publication-analysis/schema/)
 
 ### Schema diagram
+
 ![GBC database schema diagram](docs/gbc_schema_diagram.png)
-
-👉 [View the interactive schema diagram on DrawSQL](https://drawsql.app/teams/gbc-4/diagrams/gcb-publication-analysis-uber-schema)
-
-#### Note: additional tables
-2 additional tables are present in the schema definition file, which are largely independent of this analysis work:
-- `open_letter` : track the signatures of <[GBC's open letter](https://globalbiodata.org/open-letter-campaign/)>
-- `wildsi` : imported data from the <[WilDSI project](https://apex.ipk-gatersleben.de/apex/wildsi/r/wildsi/home)>, about sequence data usage
 
 # 🧰 Installation & Setup
 
@@ -120,7 +110,7 @@ for inv_pub in resource_inventory_pubs:
 
 ## gbcutils
 
-- `europepmc` : contains several methods for interacting with Europe PMC's API's & data
-- `gbc_db` : helper for opening connections to GBC's Google Cloud SQL instance
+- `europepmc` : contains several helpers for interacting with Europe PMC's API's & data
+- `db` : helper for opening connections to GBC's Google Cloud SQL instance
 - `metadata` : helper methods for sharding & storing article metadata
 - `scibert_classify` : helper methods for running ML classifications

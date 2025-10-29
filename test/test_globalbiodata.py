@@ -1,6 +1,7 @@
 import globalbiodata as gbc
 import json
-# import pytest
+from datetime import datetime, date
+import pytest
 
 #-------------------------------------#
 # Test GBC classes                    #
@@ -36,7 +37,7 @@ def test_URL_with_str_status():
         'id': 123,
         'url': 'www.test.org',
         'url_status': '200',
-        'connection_date': '2024-07-12'
+        'connection_date': '2024-07-12 00:00:00'
     }
 
     result = gbc.URL(given)
@@ -49,14 +50,14 @@ def test_URL_with_str_status():
     this_status = result.status[0]
     assert type(this_status) is gbc.ConnectionStatus
     assert this_status.status == '200'
-    assert this_status.date == '2024-07-12'
+    assert this_status.date == datetime(2024, 7, 12, 0, 0, 0)
     assert this_status.url_id == 123
 
 def test_URL_with_obj_status():
     given = {
         'id': 123,
         'url': 'www.test.org',
-        'status': gbc.ConnectionStatus({'url_id':123, 'status':'200', 'date':'2024-07-12'})
+        'status': gbc.ConnectionStatus({'url_id':123, 'status':'200', 'date':'2024-07-12 00:00:00'})
     }
 
     result = gbc.URL(given)
@@ -69,7 +70,7 @@ def test_URL_with_obj_status():
     this_status = result.status[0]
     assert type(this_status) is gbc.ConnectionStatus
     assert this_status.status == '200'
-    assert this_status.date == '2024-07-12'
+    assert this_status.date == datetime(2024, 7, 12, 0, 0, 0)
     assert this_status.url_id == 123
 
 def test_URL_with_dict_status():
@@ -77,8 +78,8 @@ def test_URL_with_dict_status():
         'id': 123,
         'url': 'www.test.org',
         'status': [
-            {'url_id':123, 'status':'200', 'date':'2024-07-12'},
-            {'url_id':123, 'status':'404', 'date':'2024-07-11'}
+            {'url_id':123, 'status':'200', 'date':'2024-07-12 00:00:00'},
+            {'url_id':123, 'status':'404', 'date':'2024-07-11 00:00:00'}
         ]
     }
 
@@ -92,12 +93,12 @@ def test_URL_with_dict_status():
     status1 = result.status[0]
     assert type(status1) is gbc.ConnectionStatus
     assert status1.status == '200'
-    assert status1.date == '2024-07-12'
+    assert status1.date == datetime(2024, 7, 12, 0, 0, 0)
 
     status2 = result.status[1]
     assert type(status2) is gbc.ConnectionStatus
     assert status2.status == '404'
-    assert status2.date == '2024-07-11'
+    assert status2.date == datetime(2024, 7, 11, 0, 0, 0)
     assert status2.url_id == 123
 
 # Tests for Version class
@@ -111,7 +112,7 @@ def test_Version():
 
     result = gbc.Version(given)
     assert result.name == 'test version'
-    assert result.date == '2024-07-12'
+    assert result.date == date(2024, 7, 12)
     assert result.user == 'tester'
     assert result.additional_metadata == {'key1': 'value1', 'key2': 2}
 
@@ -144,10 +145,10 @@ def test_Resource_full():
         'url_coordinates': (12.34, 56.78),
         'wayback_url': 'www.wayback.org/test',
         'status': [
-            {'status':'200', 'date':'2024-07-12'}
+            {'status':'200', 'date':datetime(2024, 7, 12, 0, 0, 0)}
         ],
         'version_name': 'test version',
-        'version_date': '2024-07-12',
+        'version_date': date(2024, 7, 12),
         'version_user': 'tester',
         'ext_grant_ids': 'G12345, G67890',
         'grant_agencies': 'Test Agency, Another Agency',
@@ -172,11 +173,11 @@ def test_Resource_full():
     assert len(result.url.status) == 1
     assert type(result.url.status[0]) is gbc.ConnectionStatus
     assert result.url.status[0].status == '200'
-    assert result.url.status[0].date == '2024-07-12'
+    assert result.url.status[0].date == datetime(2024, 7, 12, 0, 0, 0)
 
     assert type(result.version) is gbc.Version
     assert result.version.name == 'test version'
-    assert result.version.date == '2024-07-12'
+    assert result.version.date == date(2024, 7, 12)
     assert result.version.user == 'tester'
 
     assert type(result.grants) is list
@@ -206,6 +207,7 @@ def test_Publication():
         'affiliation_countries': 'Testland; Anotherland',
         'ext_grant_ids': 'G12345, G67890',
         'grant_agencies': 'Test Agency, Another Agency',
+        'publication_date': '2024-06-30',
     }
 
     result = gbc.Publication(given)
@@ -215,6 +217,7 @@ def test_Publication():
     assert result.pmc_id == 'PMC123456'
     assert result.affiliation == 'Test University; Another Institute'
     assert result.affiliation_countries == 'Testland; Anotherland'
+    assert result.publication_date == date(2024, 6, 30)
 
     assert type(result.grants) is list
     assert len(result.grants) == 2
@@ -261,7 +264,7 @@ def test_Accession():
     assert type(result.version) is gbc.Version
     print(result.version.__dict__)
     assert result.version.name == 'test version'
-    assert result.version.date == '2024-07-12'
+    assert result.version.date == date(2024, 7, 12)
     assert result.version.user == 'tester'
     assert result.version.additional_metadata == {'key3': 'value3', 'key4': 4}
 
@@ -284,7 +287,12 @@ def test_ResourceMention_str():
     }
 
     result = gbc.ResourceMention(given)
-    assert result.matched_alias == 'TestResource alias'
+
+    assert type(result.matched_aliases) is list
+    assert type(result.matched_aliases[0]) is gbc.MatchedAlias
+    assert result.matched_aliases[0].matched_alias == 'TestResource alias'
+    assert result.matched_aliases[0].match_count == 5
+    assert result.matched_aliases[0].mean_confidence == 0.95
     assert result.match_count == 5
     assert result.mean_confidence == 0.95
 
@@ -301,7 +309,7 @@ def test_ResourceMention_str():
     assert type(result.version) is gbc.Version
     print(result.version.__dict__)
     assert result.version.name == 'test version'
-    assert result.version.date == '2024-07-12'
+    assert result.version.date == date(2024, 7, 12)
     assert result.version.user == 'tester'
     assert result.version.additional_metadata == {'key3': 'value3', 'key4': 4}
 
@@ -324,19 +332,32 @@ def test_ResourceMention_obj():
         'version_user': 'tester',
         'additional_metadata': {'key1': 'value1', 'key2': 2}
     }
+    given_aliases = [
+        gbc.MatchedAlias({'matched_alias': 'TestResource alias', 'match_count': 5, 'mean_confidence': 0.95}),
+        gbc.MatchedAlias({'matched_alias': 'Another alias', 'match_count': 3, 'mean_confidence': 0.85})
+    ]
     given = {
         'resource': gbc.Resource(given_resource),
         'publication': gbc.Publication(given_publication),
         'version': gbc.Version(given_version),
-        'matched_alias': 'TestResource alias',
-        'match_count': 5,
-        'mean_confidence': 0.95,
+        'matched_aliases': given_aliases,
     }
 
     result = gbc.ResourceMention(given)
-    assert result.matched_alias == 'TestResource alias'
-    assert result.match_count == 5
-    assert result.mean_confidence == 0.95
+    assert result.match_count == 8
+    assert result.mean_confidence == pytest.approx(0.9)
+
+    assert type(result.matched_aliases) is list
+    assert len(result.matched_aliases) == 2
+    assert type(result.matched_aliases[0]) is gbc.MatchedAlias
+    assert result.matched_aliases[0].matched_alias == 'TestResource alias'
+    assert result.matched_aliases[0].match_count == 5
+    assert result.matched_aliases[0].mean_confidence == 0.95
+    assert type(result.matched_aliases[1]) is gbc.MatchedAlias
+    assert result.matched_aliases[1].matched_alias == 'Another alias'
+    assert result.matched_aliases[1].match_count == 3
+    assert result.matched_aliases[1].mean_confidence == 0.85
+
 
     assert type(result.resource) is gbc.Resource
     assert result.resource.short_name == 'TestResource'
@@ -351,7 +372,7 @@ def test_ResourceMention_obj():
     assert type(result.version) is gbc.Version
     print(result.version.__dict__)
     assert result.version.name == 'test version'
-    assert result.version.date == '2024-07-12'
+    assert result.version.date == date(2024, 7, 12)
     assert result.version.user == 'tester'
     assert result.version.additional_metadata == {'key1': 'value1', 'key2': 2}
 
@@ -394,7 +415,7 @@ def test_new_publication_from_EuropePMC_result(monkeypatch):
         else:
             return FakePlace()
 
-    monkeypatch.setattr(gbc.locationtagger, "find_locations", fake_find_locations)
+    monkeypatch.setattr(gbc.utils.locationtagger, "find_locations", fake_find_locations)
 
     result = gbc.new_publication_from_EuropePMC_result(epmc_result)
     assert type(result) is gbc.Publication
@@ -404,7 +425,7 @@ def test_new_publication_from_EuropePMC_result(monkeypatch):
     assert result.authors == "Hide I, Padgett WL, Jacobson KA, Daly JW."
     assert result.affiliation == "Center for Craic, Dublin, Ireland; Department of Pharmacology, Denver, United States"
     assert result.affiliation_countries == "Ireland; United States"
-    assert result.publication_date == "2022-02-01"
+    assert result.publication_date == date(2022, 2, 1)
     assert result.citation_count == 78
     assert result.keywords == "'Membranes'; 'enzymology'; 'Animals'; 'Phenethylamines'; 'pharmacology'"
 
@@ -422,14 +443,14 @@ def test_clean_affiliations():
     given_1 = "  University of Test  ; Trento;; Italy test@email.com "
     expected_1 = "University of Test, Trento, Italy"
 
-    result_1 = gbc._clean_affiliation(given_1)
+    result_1 = gbc.utils._clean_affiliation(given_1)
     assert result_1 == expected_1
 
     # Test postcode removal and country abbreviation expansion
     given_2 = "Dept. of Biology, University of Test, Test City, UK, AB12 3CD"
     expected_2 = "Dept. of Biology, University of Test, Test City, United Kingdom"
 
-    result_2 = gbc._clean_affiliation(given_2)
+    result_2 = gbc.utils._clean_affiliation(given_2)
     assert result_2 == expected_2
 
 def test_find_country(monkeypatch):
@@ -459,29 +480,29 @@ def test_find_country(monkeypatch):
                 return {"candidates": [{"formatted_address": "University of Cambridge, United Kingdom"}]}
             return {"candidates": []}
 
-    monkeypatch.setattr(gbc.locationtagger, "find_locations", fake_locationtagger_find_locations)
-    monkeypatch.setattr(gbc.googlemaps, "Client", lambda key=None: FakeClient())
+    monkeypatch.setattr(gbc.utils.locationtagger, "find_locations", fake_locationtagger_find_locations)
+    monkeypatch.setattr(gbc.utils.googlemaps, "Client", lambda key=None: FakeClient())
 
     # Test region-based disambiguation
     given_1 = "Some Dept., Dublin2, Ireland"
     expected_1 = (["Ireland"], 'locationtagger')  # Should resolve to Ireland based on region
-    result_1 = gbc._find_country(given_1, google_maps_api_key='fake_key')
+    result_1 = gbc.utils._find_country(given_1, google_maps_api_key='fake_key')
     assert result_1 == expected_1
 
     # Test Google Maps region fallback
     given_2 = "Some Dept., Portland, USA"
     expected_2 = (["United States"], 'GoogleMaps')  # Should resolve to United States based on Google Maps
-    result_2 = gbc._find_country(given_2, google_maps_api_key='fake_key')
+    result_2 = gbc.utils._find_country(given_2, google_maps_api_key='fake_key')
     assert result_2 == expected_2
 
     # Test city-based disambiguation
     given_3 = "Some Dept., Denver"
     expected_3 = (["United States"], 'locationtagger')  # Should resolve to United States based on city
-    result_3 = gbc._find_country(given_3, google_maps_api_key='fake_key')
+    result_3 = gbc.utils._find_country(given_3, google_maps_api_key='fake_key')
     assert result_3 == expected_3
 
     # Test Google Maps city fallback
     given_4 = "Some Dept., Cambridge"
     expected_4 = (["United Kingdom"], 'GoogleMaps')  # Should resolve to United Kingdom based on Google Maps
-    result_4 = gbc._find_country(given_4, google_maps_api_key='fake_key')
+    result_4 = gbc.utils._find_country(given_4, google_maps_api_key='fake_key')
     assert result_4 == expected_4

@@ -11,13 +11,13 @@ def get_gbc_connection(test: bool = False, readonly: bool = True, sqluser: str =
     """Get a connection to the GBC Google Cloud SQL instance.
 
     Args:
-        test (bool): Whether to connect to the test database. Defaults to False.
-        readonly (bool): Whether to connect in read-only mode. Defaults to True.
-        sqluser (str): The SQL username to connect with. Defaults to "gbcreader".
+        test (bool): Whether to connect to the test database.
+        readonly (bool): Whether to connect in read-only mode.
+        sqluser (str): The SQL username to connect with.
         sqlpass (str): The SQL password to connect with. Required if readonly is False.
 
     Returns:
-        tuple[Connector, Engine, Connection]: A tuple containing the Google Cloud SQL Connector, SQLAlchemy Engine, and SQLAlchemy Connection objects.
+        A tuple containing the Google Cloud SQL Connector, SQLAlchemy Engine, and SQLAlchemy Connection objects.
     """
 
     if not readonly and not sqlpass:

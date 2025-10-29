@@ -1,5 +1,6 @@
 import globalbiodata as gbc
 import sqlalchemy as db
+from datetime import datetime, date
 
 db_engine = db.create_engine('sqlite:///./test/test_data/gbc_pytest_db.sqlite')
 db_conn = db_engine.connect()
@@ -23,7 +24,7 @@ def test_resource_fetch_by_id():
     assert type(resource.version) is gbc.Version
     assert resource.version.name == 'v1.1.1'
     assert resource.version.user == 'carlac'
-    assert resource.version.date == '2025-10-17'
+    assert resource.version.date == date(2025, 10, 17)
 
     assert resource.publications is None # not expanded
 
@@ -45,7 +46,7 @@ def test_resource_expanded_fetch_by_id():
     assert type(resource.version) is gbc.Version
     assert resource.version.name == 'v1.1.1'
     assert resource.version.user == 'carlac'
-    assert resource.version.date == '2025-10-17'
+    assert resource.version.date == date(2025, 10, 17)
 
     assert type(resource.publications) is list
     assert len(resource.publications) == 1
@@ -53,7 +54,7 @@ def test_resource_expanded_fetch_by_id():
     assert resource.publications[0].id == 321
     assert resource.publications[0].pubmed_id == 321123
     assert resource.publications[0].pmc_id == 'PMC321123'
-    assert resource.publications[0].publication_date == '2025-01-10'
+    assert resource.publications[0].publication_date == date(2025, 1, 10)
     assert resource.publications[0].title == 'Publication about test resource'
     assert resource.publications[0].authors == 'A. Guy, C. Lady'
     assert resource.publications[0].affiliation == 'One place; Another place'
@@ -87,25 +88,24 @@ def test_resource_fetch_by_short_name():
     assert type(resource.version) is gbc.Version
     assert resource.version.name == 'v1.1.1'
     assert resource.version.user == 'carlac'
-    assert resource.version.date == '2025-10-17'
+    assert resource.version.date == date(2025, 10, 17)
 
 def test_resource_fetch_by_name_from_resource_obj():
     # test here can be a bit more minimal as fetch by name is already tested above
     resources1 = gbc.Resource.fetch_by_name('test_resource', conn=db_conn)
-    assert type(resources1) is list
-    assert len(resources1) == 1
-    assert resources1[0].id == 123
-    assert resources1[0].short_name == 'test_resource'
-    assert resources1[0].full_name == 'I am a Test Resource'
-    assert type(resources1[0].url) is gbc.URL
-    assert type(resources1[0].version) is gbc.Version
+    print(resources1)
+    assert type(resources1) is gbc.Resource
+    assert resources1.id == 123
+    assert resources1.short_name == 'test_resource'
+    assert resources1.full_name == 'I am a Test Resource'
+    assert type(resources1.url) is gbc.URL
+    assert type(resources1.version) is gbc.Version
 
 
     resources2 = gbc.Resource.fetch_by_name('Test Resource', conn=db_conn)
-    assert type(resources2) is list
-    assert len(resources2) == 1
-    assert resources2[0].id == 234
-    assert resources2[0].short_name == 'TESTR'
+    assert type(resources2) is gbc.Resource
+    assert resources2.id == 234
+    assert resources2.short_name == 'TESTR'
 
 def test_fetch_all_resources():
     resources = gbc.fetch_all_resources(expanded=False, conn=db_conn)
@@ -153,7 +153,7 @@ def test_version_fetch_by_id():
     assert version.id == 1
     assert version.name == 'v1.1.1'
     assert version.user == 'carlac'
-    assert version.date == '2025-10-17'
+    assert version.date == date(2025, 10, 17)
 
 def test_fetch_version_by_id_from_version_obj():
     version = gbc.Version.fetch_by_id(1, conn=db_conn)
@@ -162,7 +162,7 @@ def test_fetch_version_by_id_from_version_obj():
     assert version.id == 1
     assert version.name == 'v1.1.1'
     assert version.user == 'carlac'
-    assert version.date == '2025-10-17'
+    assert version.date == date(2025, 10, 17)
 
 def test_fetch_version_by_user():
     version = gbc.fetch_version({'user':'carlac'}, conn=db_conn)
@@ -174,13 +174,13 @@ def test_fetch_version_by_user():
     assert version[0].id == 1
     assert version[0].name == 'v1.1.1'
     assert version[0].user == 'carlac'
-    assert version[0].date == '2025-10-17'
+    assert version[0].date == date(2025, 10, 17)
 
     assert type(version[1]) is gbc.Version
     assert version[1].id == 2
     assert version[1].name == 'v1.1.2'
     assert version[1].user == 'carlac'
-    assert version[1].date == '2025-10-17'
+    assert version[1].date == date(2025, 10, 17)
 
 def test_fetch_all_versions():
     versions = gbc.fetch_all_versions(conn=db_conn)
@@ -192,19 +192,19 @@ def test_fetch_all_versions():
     assert versions[0].id == 1
     assert versions[0].name == 'v1.1.1'
     assert versions[0].user == 'carlac'
-    assert versions[0].date == '2025-10-17'
+    assert versions[0].date == date(2025, 10, 17)
 
     assert type(versions[1]) is gbc.Version
     assert versions[1].id == 2
     assert versions[1].name == 'v1.1.2'
     assert versions[1].user == 'carlac'
-    assert versions[1].date == '2025-10-17'
+    assert versions[1].date == date(2025, 10, 17)
 
     assert type(versions[2]) is gbc.Version
     assert versions[2].id == 3
     assert versions[2].name == 'v1.1.3'
     assert versions[2].user == 'nobody'
-    assert versions[2].date == '2025-01-01'
+    assert versions[2].date == date(2025, 1, 1)
 
 # Test cases for fetching **URLs and Connection Statuses** from the GBC database
 def test_fetch_url_by_id():
@@ -242,7 +242,7 @@ def test_fetch_all_urls():
     assert len(urls[0].status) == 1
     assert urls[0].is_online() is False
     assert urls[0].latest_connection_status().status == '404'
-    assert urls[0].latest_connection_status().date == '2022-07-12'
+    assert urls[0].latest_connection_status().date == datetime(2022, 7, 12, 0, 0, 0)
 
     assert type(urls[1]) is gbc.URL
     assert urls[1].id == 234
@@ -251,7 +251,7 @@ def test_fetch_all_urls():
     assert len(urls[1].status) == 3
     assert urls[1].is_online() is True
     assert urls[1].latest_connection_status().status == '200'
-    assert urls[1].latest_connection_status().date == '2025-07-12'
+    assert urls[1].latest_connection_status().date == datetime(2025, 7, 12, 0, 0, 0)
 
 # Test cases for fetching **Version** from the GBC database
 def test_fetch_version_by_name():
@@ -261,7 +261,7 @@ def test_fetch_version_by_name():
     assert version.id == 2
     assert version.name == 'v1.1.2'
     assert version.user == 'carlac'
-    assert version.date == '2025-10-17'
+    assert version.date == date(2025, 10, 17)
 
 # Test cases for fetching **Publication** from the GBC database
 def test_fetch_publication_by_id():
@@ -271,7 +271,7 @@ def test_fetch_publication_by_id():
     assert publication.id == 321
     assert publication.title == 'Publication about test resource'
     assert publication.authors == 'A. Guy, C. Lady'
-    assert publication.publication_date == '2025-01-10'
+    assert publication.publication_date == date(2025, 1, 10)
     assert publication.affiliation == 'One place; Another place'
     assert publication.affiliation_countries == 'Here; There'
     assert publication.citation_count == 123
@@ -285,7 +285,7 @@ def test_fetch_publication_expanded_by_id():
     assert publication.id == 321
     assert publication.title == 'Publication about test resource'
     assert publication.authors == 'A. Guy, C. Lady'
-    assert publication.publication_date == '2025-01-10'
+    assert publication.publication_date == date(2025, 1, 10)
     assert publication.affiliation == 'One place; Another place'
     assert publication.affiliation_countries == 'Here; There'
     assert publication.citation_count == 123
@@ -307,7 +307,7 @@ def test_fetch_publication_by_pubmed_id():
     assert publication.id == 432
     assert publication.title == 'Another publication about stuff'
     assert publication.authors == 'R. Bee'
-    assert publication.publication_date == '2022-07-01'
+    assert publication.publication_date == date(2022, 7, 1)
     assert publication.affiliation == 'Heartsville'
     assert publication.affiliation_countries == 'Everywhere'
     assert publication.citation_count == 3
@@ -359,7 +359,7 @@ def test_fetch_all_publications():
     assert publications[0].id == 321
     assert publications[0].title == 'Publication about test resource'
     assert publications[0].authors == 'A. Guy, C. Lady'
-    assert publications[0].publication_date == '2025-01-10'
+    assert publications[0].publication_date == date(2025, 1, 10)
     assert publications[0].affiliation == 'One place; Another place'
     assert publications[0].affiliation_countries == 'Here; There'
     assert publications[0].citation_count == 123
@@ -369,7 +369,7 @@ def test_fetch_all_publications():
     assert publications[1].id == 432
     assert publications[1].title == 'Another publication about stuff'
     assert publications[1].authors == 'R. Bee'
-    assert publications[1].publication_date == '2022-07-01'
+    assert publications[1].publication_date == date(2022, 7, 1)
     assert publications[1].affiliation == 'Heartsville'
     assert publications[1].affiliation_countries == 'Everywhere'
     assert publications[1].citation_count == 3
@@ -379,7 +379,7 @@ def test_fetch_all_publications():
     assert publications[2].id == 789
     assert publications[2].title == 'I mention accessions'
     assert publications[2].authors == 'Thing 1, Thing 2'
-    assert publications[2].publication_date == '2025-01-10'
+    assert publications[2].publication_date == date(2025, 1, 10)
     assert publications[2].affiliation == 'Whosville'
     assert publications[2].affiliation_countries == 'Placeyland'
 
@@ -397,7 +397,7 @@ def test_fetch_publication_by_pmc_id():
     assert publication.id == 321
     assert publication.title == 'Publication about test resource'
     assert publication.authors == 'A. Guy, C. Lady'
-    assert publication.publication_date == '2025-01-10'
+    assert publication.publication_date == date(2025, 1, 10)
     assert publication.affiliation == 'One place; Another place'
     assert publication.affiliation_countries == 'Here; There'
     assert publication.citation_count == 123

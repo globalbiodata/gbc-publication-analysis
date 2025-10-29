@@ -47,10 +47,10 @@ def query_europepmc(endpoint: str, request_params: Optional[dict] = None, no_exi
     Args:
         endpoint (str): The Europe PMC API endpoint to query.
         request_params (Optional[dict]): Dictionary of query parameters.
-        no_exit (bool): If True, do not exit on error, return None instead.
+        no_exit (bool): If `True`, do not exit on error, return `None` instead.
 
     Returns:
-        Optional[dict]: The JSON response from Europe PMC, or None on error if no_exit is True.
+        The JSON response from Europe PMC, or `None` on error if `no_exit` is `True`.
     """
     if not endpoint.startswith("http"):
         endpoint = f"{epmc_base_url}/{endpoint}"
@@ -82,7 +82,7 @@ def epmc_search(query: str, result_type: str = 'core', limit: int = 0, cursor: O
         page_size (int): Number of results per page (max 1000).
 
     Returns:
-        Optional[list]: List of search results, or (results, cursor) if returncursor is True.
+        List of search results, or `(results, cursor)` if `returncursor` is `True`.
     """
 
     page_size = limit if (limit and limit <= page_size) else page_size
@@ -353,7 +353,7 @@ def _find_europepmc_ftp_fulltext(pmcid, ftp_address="https://europepmc.org/pub/d
 
     return _extract_article_from_combined_xml(xml_path, pmcid_num)
 
-def get_fulltext_body(pmcid: str, path: Optional[str] = None, dest: str = '/tmp'):
+def get_fulltext_body(pmcid: str, path: Optional[str] = None, dest: str = '/tmp') -> tuple:
     """
     Fetch the full text body of a publication from Europe PMC by PMCID.
     If a local path is provided, it will first check for a local XML file.
@@ -365,7 +365,7 @@ def get_fulltext_body(pmcid: str, path: Optional[str] = None, dest: str = '/tmp'
         dest (str): Destination directory for downloaded/extracted XML files.
 
     Returns:
-        tuple: (text_blocks, table_blocks) where text_blocks is a list of strings
+        (text_blocks, table_blocks) where text_blocks is a list of strings
                representing the main text sections, and table_blocks is a list of
                strings representing the tables extracted from the XML.
     """

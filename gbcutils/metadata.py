@@ -19,7 +19,7 @@ def shard_key(article_id: str, shards: int = default_shard_count) -> int:
         shards (int): The total number of shards (default: 128).
 
     Returns:
-        int: The shard key for the given article_id.
+        The shard key for the given article_id.
     """
     return int(hashlib.md5(article_id.encode()).hexdigest(), 16) % shards
 
@@ -33,7 +33,7 @@ def shard_path(k: int, basepath: str = '', shards: int = default_shard_count) ->
         shards (int): The total number of shards (default: 128).
 
     Returns:
-        str: The file path for the shard key `k`.
+        The file path for the shard key `k`.
     """
     width = max(2, len(str(max(1, shards) - 1)))
     return os.path.join(basepath, f"metadata_shard_{k:0{width}d}.jsonl.gz")
@@ -51,7 +51,7 @@ def get_article_metadata(article_id: str, basepath: str = '', shards: int = defa
         shards (int): The total number of shards (default: 128).
 
     Returns:
-        Optional[dict]: The metadata dictionary for the article_id, or None if not found.
+        The metadata dictionary for the article_id, or None if not found.
     """
     global _shard_cache
     k = shard_key(article_id, shards)
@@ -82,6 +82,6 @@ def sort_ids_by_shard(ids_iterable: list, shards: int = default_shard_count) -> 
         shards (int): The total number of shards (default: 128).
 
     Returns:
-        list: The list of article IDs, sorted by their shard key.
+        The list of article IDs, sorted by their shard key.
     """
     return sorted(ids_iterable, key=lambda _id: shard_key(str(_id), shards))

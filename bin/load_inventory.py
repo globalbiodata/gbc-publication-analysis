@@ -9,7 +9,7 @@ import pandas as pd
 from collections import OrderedDict
 
 import globalbiodata as gbc
-from gbcutils.gbc_db import get_gbc_connection
+from gbcutils.db import get_gbc_connection
 from gbcutils.europepmc import epmc_search
 
 
@@ -30,33 +30,6 @@ def uniq_with_order(s, to_remove=[]):
             sl.remove(r)
     return '; '.join(sl)
 
-# def find_country(s):
-#     # print(f"Searching for countries in '{s}'")
-
-#     # location search
-#     place_entity = locationtagger.find_locations(text = s)
-#     if place_entity.countries:
-#         return place_entity.countries, 'locationtagger'
-#     elif place_entity.country_regions:
-#         if len(place_entity.country_regions) == 1: # no ambiguity
-#             return list(place_entity.country_regions.keys()), 'locationtagger'
-#         else:
-#             return advanced_geo_lookup(s), 'GoogleMaps'
-#     else:
-#         if len(place_entity.country_cities) == 1: # no ambiguity
-#             return list(place_entity.country_cities.keys()), 'locationtagger'
-#         else:
-#             return advanced_geo_lookup(s), 'GoogleMaps'
-
-# def advanced_geo_lookup(address):
-#     place_search = gmaps.find_place(address, "textquery", fields=["formatted_address", "place_id"])
-#     try:
-#         place_entity = locationtagger.find_locations(text = place_search['candidates'][0]['formatted_address'])
-#         return place_entity.countries
-#     except:
-#         return []
-
-
 def explode_record(record):
     ids = [x.strip() for x in record['pubmed_id'].split(',')]
     exploded_records = []
@@ -65,88 +38,6 @@ def explode_record(record):
         new_record['pubmed_id'] = i
         exploded_records.append(new_record)
     return exploded_records
-
-
-# def query_europepmc(pubmed_id, retry_count=0):
-#     url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:{pubmed_id}&resultType=core&format=json"
-#     response = requests.get(url)
-#     if response.status_code == 200:
-#         data = response.json()
-
-#     if not data.get('hitCount'):
-#         # response is malformed - retry up to 3 times
-#         sys.stderr.write(f"Error: No data found for {pubmed_id}\n")
-#         if retry_count < 3:
-#             return query_europepmc(pubmed_id, retry_count=retry_count+1)
-#         else:
-#             sys.exit(f"Error: No data found for {pubmed_id} after 3 retries\n")
-
-#     if data['hitCount'] == 0:
-#         sys.stderr.write(f"Error: No data found for {pubmed_id}\n")
-#         return {}
-
-#     return data['resultList']['result'][0]
-
-# def extract_grants(metadata):
-#     # extract grant list
-#     try:
-#         grant_list = metadata['grantsList']['grant']
-#     except KeyError:
-#         return {}
-
-#     grants = []
-#     for g in grant_list:
-#         grants.append([g.get('grantId', ''), g.get('agency', '')])
-
-#     return grants
-
-# def extract_keywords(metadata):
-#     # extract MeSH terms
-#     keywords = []
-
-#     these_mesh_terms = metadata.get('meshHeadingList', {}).get('meshHeading', [])
-#     for m in these_mesh_terms:
-#         keywords.append(f"'{m['descriptorName']}'")
-#         if m.get('meshQualifierList'):
-#             for q in m.get('meshQualifierList', {}).get('meshQualifier', []):
-#                 keywords.append(f"'{q['qualifierName']}'")
-
-#     these_keywords = metadata.get('keywordList', {}).get('keyword', [])
-#     for k in these_keywords:
-#         keywords.append(f"'{k}'")
-
-#     return keywords
-
-
-# def expand_metadata(record):
-#     metadata = query_europepmc(record['pubmed_id'])
-
-#     record['publication_title'] = metadata.get('title', '')
-#     record['publication_date'] = metadata.get('journalInfo', {}).get('printPublicationDate')
-#     record['pmc_id'] = metadata.get('pmcid')
-#     record['grants'] = extract_grants(metadata)
-#     record.pop('ext_grant_ids')
-#     record.pop('grant_agencies')
-
-#     record['keywords'] = extract_keywords(metadata)
-#     record['authors'] = metadata.get('authorString')
-#     record['affiliation'] = gbc._extract_affiliations(metadata)
-
-#     # improved country search
-#     if (not record['affiliation_countries'] or record['affiliation_countries'] == 'None') and record['affiliation']:
-#         # print(f"\n\n\n\n'{'; '.join(record['affiliation'])}' has no countries - searching for countries")
-#         country_dict = {}
-#         affiliation_dict = {} # avoid querying the same affiliation multiple times
-#         for a in record['affiliation']:
-#             countries, source = find_country(a)
-#             for x in countries:
-#                 country_dict[x] = source
-#             affiliation_dict[a] = 1
-
-#         record['affiliation_countries'] = list(country_dict.keys())
-#         record['affiliation_country_sources'] = list(country_dict.values())
-
-#     return record
 
 
 def split_record_data(record):

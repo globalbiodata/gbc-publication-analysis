@@ -99,13 +99,15 @@ def test_fetch_mentions_by_resource():
 
     assert type(mention.matched_aliases) is list
     assert len(mention.matched_aliases) == 2
-    assert mention.matched_aliases[0]['matched_alias'] == 'R123'
-    assert mention.matched_aliases[0]['match_count'] == 2
-    assert mention.matched_aliases[0]['mean_confidence'] == 0.9
+    assert type(mention.matched_aliases[0]) is gbc.MatchedAlias
+    assert mention.matched_aliases[0].matched_alias == 'R123'
+    assert mention.matched_aliases[0].match_count == 2
+    assert mention.matched_aliases[0].mean_confidence == 0.9
 
-    assert mention.matched_aliases[1]['matched_alias'] == 'test_resource'
-    assert mention.matched_aliases[1]['match_count'] == 1
-    assert mention.matched_aliases[1]['mean_confidence'] == 1.0
+    assert type(mention.matched_aliases[1]) is gbc.MatchedAlias
+    assert mention.matched_aliases[1].matched_alias == 'test_resource'
+    assert mention.matched_aliases[1].match_count == 1
+    assert mention.matched_aliases[1].mean_confidence == 1.0
 
 def test_fetch_mentions_by_publication():
     mentions = gbc.fetch_resource_mention({'publication_id': 890}, conn=db_conn)
@@ -127,13 +129,15 @@ def test_fetch_mentions_by_publication():
 
     assert type(mention.matched_aliases) is list
     assert len(mention.matched_aliases) == 2
-    assert mention.matched_aliases[0]['matched_alias'] == 'R123'
-    assert mention.matched_aliases[0]['match_count'] == 2
-    assert mention.matched_aliases[0]['mean_confidence'] == 0.9
+    assert type(mention.matched_aliases[0]) is gbc.MatchedAlias
+    assert mention.matched_aliases[0].matched_alias == 'R123'
+    assert mention.matched_aliases[0].match_count == 2
+    assert mention.matched_aliases[0].mean_confidence == 0.9
 
-    assert mention.matched_aliases[1]['matched_alias'] == 'test_resource'
-    assert mention.matched_aliases[1]['match_count'] == 1
-    assert mention.matched_aliases[1]['mean_confidence'] == 1.0
+    assert type(mention.matched_aliases[1]) is gbc.MatchedAlias
+    assert mention.matched_aliases[1].matched_alias == 'test_resource'
+    assert mention.matched_aliases[1].match_count == 1
+    assert mention.matched_aliases[1].mean_confidence == 1.0
 
 def test_fetch_mentions_no_results():
     mentions = gbc.fetch_resource_mention({'publication_id': 9999}, conn=db_conn)
@@ -156,9 +160,10 @@ def test_fetch_mentions_by_alias():
 
     assert type(mention.matched_aliases) is list
     assert len(mention.matched_aliases) == 1
-    assert mention.matched_aliases[0]['matched_alias'] == 'R123'
-    assert mention.matched_aliases[0]['match_count'] == 2
-    assert mention.matched_aliases[0]['mean_confidence'] == 0.9
+    assert type(mention.matched_aliases[0]) is gbc.MatchedAlias
+    assert mention.matched_aliases[0].matched_alias == 'R123'
+    assert mention.matched_aliases[0].match_count == 2
+    assert mention.matched_aliases[0].mean_confidence == 0.9
 
 
 def test_fetch_mentions_from_resource():
@@ -178,13 +183,15 @@ def test_fetch_mentions_from_resource():
 
     assert type(mention.matched_aliases) is list
     assert len(mention.matched_aliases) == 2
-    assert mention.matched_aliases[0]['matched_alias'] == 'R123'
-    assert mention.matched_aliases[0]['match_count'] == 2
-    assert mention.matched_aliases[0]['mean_confidence'] == 0.9
+    assert type(mention.matched_aliases[0]) is gbc.MatchedAlias
+    assert mention.matched_aliases[0].matched_alias == 'R123'
+    assert mention.matched_aliases[0].match_count == 2
+    assert mention.matched_aliases[0].mean_confidence == 0.9
 
-    assert mention.matched_aliases[1]['matched_alias'] == 'test_resource'
-    assert mention.matched_aliases[1]['match_count'] == 1
-    assert mention.matched_aliases[1]['mean_confidence'] == 1.0
+    assert type(mention.matched_aliases[1]) is gbc.MatchedAlias
+    assert mention.matched_aliases[1].matched_alias == 'test_resource'
+    assert mention.matched_aliases[1].match_count == 1
+    assert mention.matched_aliases[1].mean_confidence == 1.0
 
 def test_resource_referenced_by():
     resource = gbc.fetch_resource({'id': 123}, conn=db_conn)

@@ -26,95 +26,12 @@ def _remove_substring_matches(mentions):
 
     return mentions
 
-case_sensitive_threshold = 30 # switch to case sensitive search after this number of matches for a resource
-# def get_resource_mentions_separate(textblocks: list, tableblocks: list, resource_names: list, case_sensitive_resources: list = []) -> list:
-#     """
-#     Identify mentions of resources from text and table blocks, by text matching.
-
-#     Args:
-#         textblocks (list): List of text blocks (e.g., paragraphs).
-#         tableblocks (list): List of table blocks (e.g., table contents).
-#         resource_names (list): List of resource name lists (each list contains aliases for a resource).
-#         case_sensitive_resources (list): List of resource names that should be matched case-sensitively.
-
-#     Returns:
-#         list: List of tuples (sentence/row, matched_alias, resource_name).
-#     """
-
-#     mentions = []
-
-#     # precompile regex patterns for each resource alias
-#     # This is more efficient than compiling them on-the-fly in the loop
-#     compiled_patterns = []
-#     for resource in resource_names:
-#         resource_name = resource[0]
-#         for alias in resource:
-#             if resource_name in case_sensitive_resources:
-#                 pattern_case_sensitive = re.compile(rf"[^A-Za-z]{re.escape(alias)}[^A-Za-z]")
-#                 compiled_patterns.append((resource_name, alias, pattern_case_sensitive))
-#             else:
-#                 # Use case-insensitive pattern for all other resources
-#                 pattern_case_insensitive = re.compile(rf"[^A-Za-z]{re.escape(alias.lower())}[^A-Za-z]")
-#                 compiled_patterns.append((resource_name, alias, pattern_case_insensitive))
-
-#     # Split the fulltext into sentences and table rows
-#     for block in textblocks:
-#         # sentences = block.split('. ')
-#         sentences = sent_tokenize(block)  # Use NLTK to split into sentences
-#         for sentence in sentences:
-#             sentence = sentence.replace("\n", " ")
-#             s_lowered = sentence.lower()
-#             this_sentence_mentions = []
-#             for resource_name, alias, pattern_ci in compiled_patterns:
-#                 if pattern_ci.search(s_lowered):
-#                     this_sentence_mentions.append((sentence.strip(), alias, resource_name))
-
-#             if len(this_sentence_mentions) > 1:
-#                 this_sentence_mentions = _remove_substring_matches(this_sentence_mentions)
-#             mentions.extend(this_sentence_mentions)
-
-#     for table in tableblocks:
-#         rows = table.split('\n')
-
-#         for row in rows:
-#             r_lowered = row.lower()
-#             this_row_mentions = []
-#             for resource_name, alias, pattern_ci in compiled_patterns:
-#                 if pattern_ci.search(r_lowered):
-#                     this_row_mentions.append((row.strip(), alias, resource_name))
-
-#             if len(this_row_mentions) > 1:
-#                 this_row_mentions = _remove_substring_matches(this_row_mentions)
-#             mentions.extend(this_row_mentions)
-
-#     # if a large number of matches are found for one resource, switch to case sensitive mode
-#     filtered_mentions = []
-#     alias_counts = Counter([m[1] for m in mentions])
-#     for alias, count in alias_counts.items():
-#         if count > case_sensitive_threshold:
-#             if VERBOSE:
-#                 print(f"⚠️ {count} matches found for {alias} - switching to case sensitive mode")
-#             pattern_case_sensitive = re.compile(rf"[^A-Za-z]{re.escape(alias)}[^A-Za-z]")
-#             for m in mentions:
-#                 if m[1] == alias and pattern_case_sensitive.search(m[0]):
-#                     filtered_mentions.append(m)
-#         else:
-#             this_alias_mentions = [m for m in mentions if m[1] == alias]
-#             filtered_mentions.extend(this_alias_mentions)
-
-#     # Remove duplicates
-#     mentions = list(set(filtered_mentions))
-#     # Remove empty mentions
-#     mentions = [m for m in mentions if m[0]]
-
-#     return mentions
-
 def _normalize_alias_for_regex(alias: str) -> str:
     """
     Turn a resource alias into a regex-safe pattern that matches flexibly.
-      - Spaces -> \s+   (any whitespace)
-      - Hyphens/dashes -> a class of common Unicode dashes
-      - Dots -> \.?     (optional literal dot)
+        - Spaces -> \\s+   (any whitespace)
+        - Hyphens/dashes -> a class of common Unicode dashes
+        - Dots -> \\.?     (optional literal dot)
     Returns a regex string (ready for insertion into a larger pattern).
     """
     # Escape first so regex metachars in alias are treated literally
@@ -132,6 +49,7 @@ def _normalize_alias_for_regex(alias: str) -> str:
 
     return escaped
 
+case_sensitive_threshold = 30 # switch to case sensitive search after this number of matches for a resource
 def get_resource_mentions(text: str, resource_names: list, case_sensitive_resources: list = []) -> list:
     """
     Identify mentions of resources from a body of text, by text matching.
@@ -142,7 +60,7 @@ def get_resource_mentions(text: str, resource_names: list, case_sensitive_resour
         case_sensitive_resources (list): List of resource names that should be matched case-sensitively.
 
     Returns:
-        list: List of tuples (sentence, matched_alias, resource_name).
+        List of tuples `(sentence, matched_alias, resource_name)`.
     """
 
     mentions = []
@@ -201,7 +119,7 @@ def get_resource_mentions(text: str, resource_names: list, case_sensitive_resour
 
     return mentions
 
-def load_model(model_name: str, num_threads: int = 1):
+def load_model(model_name: str, num_threads: int = 1) -> tuple:
     """
     Load the SciBERT model and tokenizer for sequence classification.
 
@@ -210,7 +128,7 @@ def load_model(model_name: str, num_threads: int = 1):
         num_threads (int): Number of CPU threads to use if running on CPU.
 
     Returns:
-        tuple: (tokenizer, model, device)
+        `(tokenizer, model, device)`
     """
     if torch.cuda.is_available():
         if VERBOSE:
@@ -250,7 +168,7 @@ def classify_mentions(
         device (torch.device, optional): The device to run the model on.
 
     Returns:
-        list: List of prediction dictionaries with keys:
+        List of prediction dictionaries with keys:
             - prediction (int): 1 for positive, 0 for negative.
             - id (str): The provided this_id.
             - resource_name (str): The name of the resource.
