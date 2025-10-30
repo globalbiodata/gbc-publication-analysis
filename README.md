@@ -1,3 +1,5 @@
+![GBC Logo](docs/assets/gbc-logo.png)
+
 # 🧭 Introduction / Background
 
 The [Global Biodata Coalition](https://globalbiodata.org) seeks to exchange knowledge and share strategies for supporting biodata resources. To develop an underlying evidence base to show the importance of biodata resources to the life sciences comminity at large, several data analyses were undertaken. All were based on mining published scientific literature, with the help of Europe PMC's APIs.
