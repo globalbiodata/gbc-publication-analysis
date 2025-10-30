@@ -4,14 +4,10 @@
 
 The [Global Biodata Coalition](https://globalbiodata.org) seeks to exchange knowledge and share strategies for supporting biodata resources. To develop an underlying evidence base to show the importance of biodata resources to the life sciences comminity at large, several data analyses were undertaken. All were based on mining published scientific literature, with the help of Europe PMC's APIs.
 
-### 1. A global inventory
-The aim here is to identify publications the describe a resources, and form a list of known biodata resources.
+1. **A global inventory** : The aim here is to identify publications the describe a resources, and form a list of known biodata resources.
+2. **Resource mentions** : Here, we wish to capture the usage of these inventory resources by detecting mentions of their names & aliases in open-access full-text articles. This seeks to capture the more informal type of resource citation (outside of official publication references and/or data citations).
+3. **Data citations** : Finally, data from these resources can be cited directly by accession number (or other resource-dependent identifier). These are annotated as part of Europe PMC's text-mining service and have been imported into our database as an additional data source.
 
-### 2. Resource mentions
-Here, we wish to capture the usage of these inventory resources by detecting mentions of their names & aliases in open-access full-text articles. This seeks to capture the more informal type of resource citation (outside of official publication references and/or data citations).
-
-### 3. Data citations
-Finally, data from these resources can be cited directly by accession number (or other resource-dependent identifier). These are annotated as part of Europe PMC's text-mining service and have been imported into our database as an additional data source.
 
 In essence, the project links biodata resources to scientific publications using three complementary lines of evidence. By combining these into a single, unified schema, we can systematically compare how resources are described, mentioned, and cited across the literature.
 
