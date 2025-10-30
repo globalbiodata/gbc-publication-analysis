@@ -2,7 +2,7 @@
 
 Below is the full schema diagram used in the GBC publication analysis project.
 
-![GBC database schema](gbc_schema_diagram.png)
+![GBC database schema](assets/gbc_schema_diagram.png)
 
 ## Core Tables
 

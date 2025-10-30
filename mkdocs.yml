@@ -57,6 +57,8 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
+  - md_in_html
+  - attr_list
 
 extra_css:
-  - css/extra.css
+  - assets/extra.css

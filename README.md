@@ -11,6 +11,12 @@ Here, we wish to capture the usage of these inventory resources by detecting men
 ### 3. Data citations
 Finally, data from these resources can be cited directly by accession number (or other resource-dependent identifier). These are annotated as part of Europe PMC's text-mining service and have been imported into our database as an additional data source.
 
+In essence, the project links biodata resources to scientific publications using three complementary lines of evidence. By combining these into a single, unified schema, we can systematically compare how resources are described, mentioned, and cited across the literature.
+
+This integration allows us to assess how widely each resource is used, identify patterns of citation behaviour, and quantify their scientific impact — providing a clearer picture of how key biodata resources underpin discovery and data reuse in the life sciences.
+
+![Overview of resource<->publication linking](docs/assets/link_overview.png)
+
 # 🧱 Database Schema Overview
 
 The project uses a relational schema to link publications, biodata resources, mentions, and data citations.
@@ -18,15 +24,18 @@ At a high level:
 
 - `publication` — article metadata
 - `resource` — biodata resources
-- `resource_mention` — text mentions
-- `accession` & `accession_publication` — data citations
+- `resource_publication` - links resources to their inventory publications
+- `resource_mention` — links resources to publications containing text-based name mentions
+- `accession` & `accession_publication` — links resources to publications containing citation of their data
+
 
 👉 [View the full interactive schema diagram](https://drawsql.app/teams/gbc-4/diagrams/gcb-publication-analysis-uber-schema)
-👉 [Read full schema documentation](https://your-username.github.io/gbc-publication-analysis/schema/)
 
-### Schema diagram
+👉 [Read full schema documentation](https://globalbiodata.github.io/gbc-publication-analysis/schema/)
 
-![GBC database schema diagram](docs/gbc_schema_diagram.png)
+#### Schema diagram
+
+![GBC database schema diagram](docs/assets/gbc_schema_diagram.png)
 
 # 🧰 Installation & Setup
 
@@ -62,13 +71,24 @@ The GBC database is hosted on Google's Cloud Platform, so in order to interact w
     ```
     See https://github.com/GoogleCloudPlatform/cloud-sql-python-connector for more information
 
+4. **Clone the repo and run test suite**
 
-# 🧠 Project Structure
+    ```bash
+    git clone https://github.com/globalbiodata/gbc-publication-analysis.git
+    cd gbc-publication-analysis
+    export PYTHONPATH=$PYTHONPATH:$PWD
+    pytest
+    ```
+
+    ✅ If all tests pass you have completed setup!
+
+
+# 🧠 Project Structure Overview
 
 ```
 gbc-publication-analysis/
 │
-├── globalbiodata.py             # Core module with database object classes and helpers
+├── globalbiodata.               # Core module with database object classes and helpers
 ├── gbc_analysis_schema.sql      # Schema definition file (MySQL)
 ├── gbc_analysis_schema.sqlite   # Schema definition file (SQLite3)
 ├── gbcutils/                    # Utility modules for parsing, normalisation, database connections, etc.
@@ -79,6 +99,9 @@ gbc-publication-analysis/
 
 # 🧑‍💻 Core Modules
 
+> 💡 **API Documentation:**
+> Full API reference available at [globalbiodata.github.io/gbc-publication-analysis](https://globalbiodata.github.io/gbc-publication-analysis/)
+
 ## globalbiodata
 
 This module contains a number of helpful methods and classes for interacting with GBC data types.
@@ -87,26 +110,7 @@ This module contains a number of helpful methods and classes for interacting wit
 - Each class includes:
     - Fetch / write methods
     - Helper methods for processing
-- Documented with Google-style docstrings — see code for full API
-
-#### Example usage
-```python
-import globalbiodata as gbc
-from gbcutils import gbc_db
-
-(gcp_connector, db_engine, db_conn) = get_gbc_connection()
-
-# Fetch a resource by name
-resource = gbc.fetch_resource({'short_name':'test_resource'}, conn=db_conn)
-print(resource.publications)
-
-# Fetch all publications about this resource
-resource_inventory_pubs = resource.publications
-
-# Identify which resources a publication mentions
-for inv_pub in resource_inventory_pubs:
-    mentioned_resources = inv_pub.mentions()
-```
+- Documented with Google-style docstrings — see API docs for full details
 
 ## gbcutils
 
