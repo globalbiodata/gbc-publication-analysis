@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://globalbiodata.github.io/gbc-publication-analysis/schema/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Database Schema - GBC Publication Analysis API documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Database Schema";
+        var mkdocs_page_input_path = "schema.md";
+        var mkdocs_page_url = "/gbc-publication-analysis/schema/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> GBC Publication Analysis API documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../usage/">Usage</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Database Schema</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#core-tables">Core Tables</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#resource">resource</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#publication">publication</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#resource_publication">resource_publication</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#url">url</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#connection_status">connection_status</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#grant">grant</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#grant_agency">grant_agency</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#resource_grant">resource_grant</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#publication_grant">publication_grant</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#version">version</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#accession">accession</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#accession_publication">accession_publication</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#resource_mention">resource_mention</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#note-additional-tables">Note: additional tables</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >globalbiodata</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_resource/">Resource</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_publication/">Publication</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_grant/">Grant & GrantAgency</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_url/">URL & ConnectionStatus</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_accession/">Accession</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_resource_mention/">ResourceMention & MatchedAlias</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_version/">Version</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/globalbiodata_utils/">Utilities</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >gbcutils</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../api/gbcutils_db/">db</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/gbcutils_europepmc/">europepmc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/gbcutils_metadata/">metadata</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../api/gbcutils_scibert/">scibert_classify</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">GBC Publication Analysis API documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Database Schema</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/globalbiodata/gbc-publication-analysis/edit/master/docs/schema.md">Edit on gbc-publication-analysis</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="database-schema">🧱 Database Schema</h1>
+<p>Below is the full schema diagram used in the GBC publication analysis project.</p>
+<p><img alt="GBC database schema" src="../gbc_schema_diagram.png" /></p>
+<h2 id="core-tables">Core Tables</h2>
+<h3 id="resource"><code>resource</code></h3>
+<ul>
+<li>Describes a biodata resource</li>
+<li>Linked to URLs and associated connection statuses/online status</li>
+<li>Linked to publications by inventory, mentions and accessions/data citation<ul>
+<li>inventory links represented in the <code>resource_publication</code> table</li>
+<li>mentions links represented in the <code>resource_mention</code> table</li>
+<li>accession/data citation links represented in the <code>accession</code> and <code>accession_publication</code> tables</li>
+</ul>
+</li>
+<li>Versioned by <code>version_id</code>, which is fully described in the <code>version</code> table<ul>
+<li>each workflow run/data source represented by a different version, so provenece is captured by this too</li>
+</ul>
+</li>
+<li><code>is_latest</code> represents the most recent version of the resource</li>
+<li><code>is_gcbr</code> captures GCBR status</li>
+<li>Represented in API by <a href="../api/globalbiodata_resource/"><code>Resource</code> object</a></li>
+</ul>
+<h3 id="publication"><code>publication</code></h3>
+<ul>
+<li>Stores metadata for publications (title, journal, year, etc.)</li>
+<li>Affiliation country inferred upon import</li>
+<li>Linked to resources by inventory, mentions and accessions/data citation<ul>
+<li>inventory links represented in the <code>resource_publication</code> table</li>
+<li>mentions links represented in the <code>resource_mention</code> table</li>
+<li>accession/data citation links represented in the <code>accession</code> and <code>accession_publication</code> tables</li>
+</ul>
+</li>
+<li>Linked to associated grants and grant agencies</li>
+<li>Represented in API by <a href="../api/globalbiodata_publication/"><code>Publication</code> object</a></li>
+</ul>
+<h3 id="resource_publication"><code>resource_publication</code></h3>
+<ul>
+<li>Joins resource and publication tables, allowing a many-to-many type of relationship</li>
+<li>This link represents the inventory. i.e. a link here means that the publication <em>describes</em> the resource.</li>
+<li>Represented in API as the <code>.publications</code> attribute of a <a href="../api/globalbiodata_resource/"><code>Resource</code> object</a></li>
+</ul>
+<h3 id="url"><code>url</code></h3>
+<ul>
+<li>Describes URL of a resource</li>
+<li>Represented in API by <a href="../api/globalbiodata_url/#globalbiodata.url.URL"><code>URL</code> object</a></li>
+</ul>
+<h3 id="connection_status"><code>connection_status</code></h3>
+<ul>
+<li>Describes ping/connection information for a URL</li>
+<li><code>is_online</code> inferred from ping return status</li>
+<li>Represented in API by <a href="../api/globalbiodata_url/#globalbiodata.url.ConnectionStatus"><code>ConnectionStatus</code> object</a></li>
+</ul>
+<h3 id="grant"><code>grant</code></h3>
+<ul>
+<li>Describes grants associated with resources/publications and their agencies</li>
+<li>Represented in API by <a href="../api/globalbiodata_grant/#globalbiodata.grant.Grant"><code>Grant</code> object</a></li>
+</ul>
+<h3 id="grant_agency"><code>grant_agency</code></h3>
+<ul>
+<li>Records for grant_agencies (name, estimated country)</li>
+<li><code>parent_agency_id</code> and <code>representative_agency_id</code> represents relationships between agencies<ul>
+<li><code>parent_agency_id</code> introduces hierarchical relationships (i.e. agency X funds agency Y)</li>
+<li><code>representative_agency_id</code> groups different names/aliases for the <em>same</em> agency (i.e. XYZ and X.Y.Z. are the same agency, and XYZ is the representative/canonical name for the whole group)</li>
+</ul>
+</li>
+<li>Represented in API by <a href="../api/globalbiodata_grant/#globalbiodata.grant.GrantAgency"><code>GrantAgency</code> object</a></li>
+</ul>
+<h3 id="resource_grant"><code>resource_grant</code></h3>
+<ul>
+<li>Joins resource and grant tables</li>
+<li>Allows a many-to-many relationship between the two</li>
+<li>Represented in API as the <code>.grants</code> attribute of a <a href="../api/globalbiodata_resource/"><code>Resource</code> object</a></li>
+</ul>
+<h3 id="publication_grant"><code>publication_grant</code></h3>
+<ul>
+<li>Joins publication and grant tables</li>
+<li>Allows a many-to-many relationship between the two</li>
+<li>Represented in API as the <code>.grants</code> attribute of a <a href="../api/globalbiodata_publication/"><code>Publication</code> object</a></li>
+</ul>
+<h3 id="version"><code>version</code></h3>
+<ul>
+<li>Describes the pipeline/process that identified the data</li>
+<li>Means of versioning &amp; data provenece</li>
+<li>Represented in API by <a href="../api/globalbiodata_version/"><code>Version</code> object</a></li>
+</ul>
+<h3 id="accession"><code>accession</code></h3>
+<ul>
+<li>Holds data citations/accessions plus their associated metadata</li>
+<li>Links to resources via <code>resource_id</code></li>
+<li>Versioned by <code>version_id</code></li>
+<li>Represented in API by <a href="../api/globalbiodata_accession/"><code>Accession</code> object</a></li>
+</ul>
+<h3 id="accession_publication"><code>accession_publication</code></h3>
+<ul>
+<li>Maps accessions to the publications they were found in</li>
+<li>Table to join accession and publication tables, allowing a many-to-many type of relationship</li>
+<li>Represented in API as the <code>.publications</code> attribute of an <a href="../api/globalbiodata_accession/"><code>Accession</code> object</a></li>
+</ul>
+<h3 id="resource_mention"><code>resource_mention</code></h3>
+<ul>
+<li>Links resources to publications that have mentioned the resource's name in the article text</li>
+<li>Includes context, classifier confidence, etc.</li>
+<li>Represented in API by <a href="../api/globalbiodata_resource_mention/"><code>ResourceMention</code> object</a></li>
+</ul>
+<h2 id="note-additional-tables">Note: additional tables</h2>
+<p>2 additional tables are present in the schema definition file, which are largely independent of this analysis work:</p>
+<ul>
+<li><code>open_letter</code> : track the signatures of <a href="https://globalbiodata.org/open-letter-campaign/">GBC's open letter</a></li>
+<li><code>wildsi</code> : imported data from the <a href="https://apex.ipk-gatersleben.de/apex/wildsi/r/wildsi/home">WilDSI project</a>, about sequence data usage</li>
+</ul>
+<p>These tables <strong>do not</strong> have API classes.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../usage/" class="btn btn-neutral float-left" title="Usage"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../api/globalbiodata_resource/" class="btn btn-neutral float-right" title="Resource">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/globalbiodata/gbc-publication-analysis" class="fa fa-code-fork" style="color: #fcfcfc"> gbc-publication-analysis</a>
+        </span>
+    
+    
+      <span><a href="../usage/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../api/globalbiodata_resource/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

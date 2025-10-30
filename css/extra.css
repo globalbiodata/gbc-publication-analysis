@@ -1,0 +1,12 @@
+/* Add breathing room after mkdocstrings source code blocks */
+div.doc-contents + h2,
+div.doc-contents + h3,
+div.doc-contents + h4 {
+  margin-top: 1.2em !important;
+}
+
+/* or, more generally, after the "source" dropdown */
+/* Add vertical space after the 'Source code in …' details block */
+details.quote {
+  margin-bottom: 2em !important;   /* Adjust to taste */
+}

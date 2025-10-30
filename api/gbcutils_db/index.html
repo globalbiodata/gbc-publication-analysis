@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://globalbiodata.github.io/gbc-publication-analysis/api/gbcutils_db/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>db - GBC Publication Analysis API documentation</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../css/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "db";
+        var mkdocs_page_input_path = "api/gbcutils_db.md";
+        var mkdocs_page_url = "/gbc-publication-analysis/api/gbcutils_db/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> GBC Publication Analysis API documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../usage/">Usage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../schema/">Database Schema</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" >globalbiodata</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_resource/">Resource</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_publication/">Publication</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_grant/">Grant & GrantAgency</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_url/">URL & ConnectionStatus</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_accession/">Accession</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_resource_mention/">ResourceMention & MatchedAlias</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_version/">Version</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../globalbiodata_utils/">Utilities</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" >gbcutils</a>
+    <ul class="current">
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">db</a>
+    <ul class="current">
+    <li class="toctree-l3"><a class="reference internal" href="#gbcutils.db.get_gbc_connection">get_gbc_connection</a>
+    </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../gbcutils_europepmc/">europepmc</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../gbcutils_metadata/">metadata</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../gbcutils_scibert/">scibert_classify</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">GBC Publication Analysis API documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Reference</li>
+          <li class="breadcrumb-item">gbcutils</li>
+      <li class="breadcrumb-item active">db</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/globalbiodata/gbc-publication-analysis/edit/master/docs/api/gbcutils_db.md">Edit on gbc-publication-analysis</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <div class="doc doc-object doc-module">
+
+
+
+<h2 id="gbcutils.db" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">gbcutils.db</span>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gbcutils.db.get_gbc_connection" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_gbc_connection</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_gbc_connection</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">test</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">sqluser</span><span class="o">=</span><span class="s2">&quot;gbcreader&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">sqlpass</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a connection to the GBC Google Cloud SQL instance.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>test</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to connect to the test database.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>readonly</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to connect in read-only mode.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>sqluser</code></b>
+                  (<code><span title="str">str</span></code>, default:
+                      <code>&#39;gbcreader&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The SQL username to connect with.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>sqlpass</code></b>
+                  (<code><span title="str">str</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The SQL password to connect with. Required if readonly is False.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="tuple">tuple</span>[<span title="google.cloud.sql.connector.Connector">Connector</span>, <span title="sqlalchemy.engine.Engine">Engine</span>, <span title="sqlalchemy.engine.Connection">Connection</span>]</code>
+              –
+              <div class="doc-md-description">
+                <p>A tuple containing the Google Cloud SQL Connector, SQLAlchemy Engine, and SQLAlchemy Connection objects.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+            <details class="quote">
+              <summary>Source code in <code>gbcutils/db.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span>
+<span class="normal"><a href="#__codelineno-0-18">18</a></span>
+<span class="normal"><a href="#__codelineno-0-19">19</a></span>
+<span class="normal"><a href="#__codelineno-0-20">20</a></span>
+<span class="normal"><a href="#__codelineno-0-21">21</a></span>
+<span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span>
+<span class="normal"><a href="#__codelineno-0-24">24</a></span>
+<span class="normal"><a href="#__codelineno-0-25">25</a></span>
+<span class="normal"><a href="#__codelineno-0-26">26</a></span>
+<span class="normal"><a href="#__codelineno-0-27">27</a></span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span>
+<span class="normal"><a href="#__codelineno-0-29">29</a></span>
+<span class="normal"><a href="#__codelineno-0-30">30</a></span>
+<span class="normal"><a href="#__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#__codelineno-0-33">33</a></span>
+<span class="normal"><a href="#__codelineno-0-34">34</a></span>
+<span class="normal"><a href="#__codelineno-0-35">35</a></span>
+<span class="normal"><a href="#__codelineno-0-36">36</a></span>
+<span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#__codelineno-0-40">40</a></span>
+<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_gbc_connection</span><span class="p">(</span><span class="n">test</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">readonly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">sqluser</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gbcreader&quot;</span><span class="p">,</span> <span class="n">sqlpass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Connector</span><span class="p">,</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">Connection</span><span class="p">]:</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a connection to the GBC Google Cloud SQL instance.</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="sd">        test (bool): Whether to connect to the test database.</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">        readonly (bool): Whether to connect in read-only mode.</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">        sqluser (str): The SQL username to connect with.</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="sd">        sqlpass (str): The SQL password to connect with. Required if readonly is False.</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">        A tuple containing the Google Cloud SQL Connector, SQLAlchemy Engine, and SQLAlchemy Connection objects.</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22"></a>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">readonly</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sqlpass</span><span class="p">:</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You must provide a SQL user credentials if not in readonly mode.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">database</span> <span class="o">=</span> <span class="s2">&quot;gbc-publication-analysis:europe-west2:gbc-sql/gbc-publication-analysis&quot;</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="n">database</span> <span class="o">+=</span> <span class="s2">&quot;-test&quot;</span> <span class="k">if</span> <span class="n">test</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="n">instance</span><span class="p">,</span> <span class="n">db_name</span> <span class="o">=</span> <span class="n">database</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a>    <span class="n">gcp_connector</span> <span class="o">=</span> <span class="n">Connector</span><span class="p">()</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">getcloudconn</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connections</span><span class="o">.</span><span class="n">Connection</span><span class="p">:</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a>        <span class="n">conn</span><span class="p">:</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connections</span><span class="o">.</span><span class="n">Connection</span> <span class="o">=</span> <span class="n">gcp_connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>            <span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;pymysql&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>            <span class="n">user</span><span class="o">=</span><span class="n">sqluser</span><span class="p">,</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>            <span class="n">password</span><span class="o">=</span><span class="n">sqlpass</span><span class="p">,</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>            <span class="n">db</span><span class="o">=</span><span class="n">db_name</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="p">)</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="k">return</span> <span class="n">conn</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="n">cloud_engine</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="s2">&quot;mysql+pymysql://&quot;</span><span class="p">,</span> <span class="n">creator</span><span class="o">=</span><span class="n">getcloudconn</span><span class="p">,</span> <span class="n">pool_recycle</span><span class="o">=</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">pool_pre_ping</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="n">cloud_engine</span><span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">isolation_level</span><span class="o">=</span><span class="s2">&quot;READ COMMITTED&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">gcp_connector</span><span class="p">,</span> <span class="n">cloud_engine</span><span class="p">,</span> <span class="n">cloud_engine</span><span class="o">.</span><span class="n">connect</span><span class="p">())</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../globalbiodata_utils/" class="btn btn-neutral float-left" title="Utilities"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../gbcutils_europepmc/" class="btn btn-neutral float-right" title="europepmc">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/globalbiodata/gbc-publication-analysis" class="fa fa-code-fork" style="color: #fcfcfc"> gbc-publication-analysis</a>
+        </span>
+    
+    
+      <span><a href="../globalbiodata_utils/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../gbcutils_europepmc/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
