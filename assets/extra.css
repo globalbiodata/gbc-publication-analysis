@@ -1,0 +1,28 @@
+/* Add breathing room after mkdocstrings source code blocks */
+div.doc-contents + h2,
+div.doc-contents + h3,
+div.doc-contents + h4 {
+  margin-top: 1.2em !important;
+}
+
+/* or, more generally, after the "source" dropdown */
+/* Add vertical space after the 'Source code in …' details block */
+details.quote {
+  margin-bottom: 2em !important;   /* Adjust to taste */
+}
+
+
+/* Header two-column layout for Read the Docs theme */
+.wy-nav-content .header-split {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+.wy-nav-content .hs-left { flex: 3; min-width: 0; }
+.wy-nav-content .hs-right { flex: 1; text-align: right; }
+.wy-nav-content .hs-right img { max-width: 100%; height: auto; border-radius: 6px; }
+@media (max-width: 900px) {
+  .wy-nav-content .header-split { flex-direction: column; align-items: flex-start; }
+  .wy-nav-content .hs-right { text-align: left; }
+}

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
         <link href="assets/_mkdocstrings.css" rel="stylesheet" />
-        <link href="css/extra.css" rel="stylesheet" />
+        <link href="assets/extra.css" rel="stylesheet" />
     
       <script>
         // Current page data
@@ -44,6 +44,12 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-a-global-inventory">1. A global inventory</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-resource-mentions">2. Resource mentions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-data-citations">3. Data citations</a>
+    </li>
     </ul>
                 </li>
               </ul>
@@ -114,14 +120,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="gbc-publication-analysis">GBC Publication Analysis</h1>
-<p>This project analyses how biodata resources are described, mentioned and cited in the literature.</p>
+                <div class="header-split">
+  <div class="hs-left" markdown>
+    <h1>GBC Publication Analysis</h1>
+  </div>
+  <div class="hs-right">
+    <img src="assets/gbc-logo.png" alt="GBC logo">
+  </div>
+</div>
+
+<h2 id="introduction-background">🧭 Introduction / Background</h2>
+<p>The <a href="https://globalbiodata.org">Global Biodata Coalition</a> seeks to exchange knowledge and share strategies for supporting biodata resources. To develop an underlying evidence base to show the importance of biodata resources to the life sciences community at large, several data analyses were undertaken. All were based on mining published scientific literature, with the help of Europe PMC's APIs.</p>
+<h4 id="1-a-global-inventory">1. A global inventory</h4>
+<p>The aim here is to identify publications that describe a resource and form a list of known biodata resources.</p>
+<h4 id="2-resource-mentions">2. Resource mentions</h4>
+<p>Here, we wish to capture the usage of these inventory resources by detecting mentions of their names &amp; aliases in open-access full-text articles. This seeks to capture the more informal type of resource citation (outside of official publication references and/or data citations).</p>
+<h4 id="3-data-citations">3. Data citations</h4>
+<p>Finally, data from these resources can be cited directly by accession number (or other resource-dependent identifier). These are annotated as part of Europe PMC's text-mining service and have been imported into our database as an additional data source.</p>
+<h2 id="api-summary">API Summary</h2>
+<p>These pages provide a complete reference for the Global Biodata Coalition publication analysis toolkit — including the main Python modules, utility functions, and the underlying database schema.</p>
 <ul>
-<li><strong>Core module:</strong> <code>globalbiodata</code> (ORM-like classes, DB helpers)</li>
-<li><strong>Utilities:</strong> <code>gbcutils/*</code> (connections, querying, parsing, cleaning, etc)</li>
-<li><strong>Schema:</strong> Database tables &amp; relationships</li>
+<li>🧩 <strong><code>globalbiodata</code> module</strong>: Core ORM-style classes for interacting with publications, resources, accessions, and related data.</li>
+<li>🧰 <strong>Utility modules</strong>: Helper functions for database connections, querying, parsing, and text-cleaning tasks. Requirements for many of our analysis workflows.</li>
+<li>🛢️ <strong>Database schema</strong>: Overview of the MySQL schema and entity relationships used throughout the analysis.</li>
 </ul>
-<p>See the API Reference for full class &amp; method docs (pulled from Google-style docstrings).</p>
+<p>Each section includes auto-generated documentation pulled from in-code docstrings, alongside examples and structural diagrams where applicable.</p>
               
             </div>
           </div><footer>
@@ -174,5 +197,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-10-30 10:00:13.135923+00:00
+Build Date UTC : 2025-10-30 14:30:56.748302+00:00
 -->
