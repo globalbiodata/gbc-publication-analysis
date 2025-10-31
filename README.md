@@ -1,6 +1,6 @@
 ![GBC Logo](docs/assets/gbc-logo.png)
 
-# 🧭 Introduction / Background
+# 🧭 Background
 
 The [Global Biodata Coalition](https://globalbiodata.org) seeks to exchange knowledge and share strategies for supporting biodata resources. To develop an underlying evidence base to show the importance of biodata resources to the life sciences comminity at large, several data analyses were undertaken. All were based on mining published scientific literature, with the help of Europe PMC's APIs.
 
@@ -14,6 +14,16 @@ In essence, the project links biodata resources to scientific publications using
 This integration allows us to assess how widely each resource is used, identify patterns of citation behaviour, and quantify their scientific impact — providing a clearer picture of how key biodata resources underpin discovery and data reuse in the life sciences.
 
 ![Overview of resource<->publication linking](docs/assets/link_overview.png)
+
+# 🧭 Introduction
+
+**This repository contains the building blocks required for undertaking much of this analysis.**
+
+In particular, held here is:
+
+- Database schema definitions
+- Python classes and methods for interacting with this database
+- Utility functions to enable common tasks required across our analyses
 
 # 🧱 Database Schema Overview
 
@@ -34,6 +44,42 @@ At a high level:
 #### Schema diagram
 
 ![GBC database schema diagram](docs/assets/gbc_schema_diagram.png)
+
+# 🧠 Project Structure Overview
+
+```
+gbc-publication-analysis/
+│
+├── globalbiodata.               # Core module with database object classes and helpers
+├── gbc_analysis_schema.sql      # Schema definition file (MySQL)
+├── gbc_analysis_schema.sqlite   # Schema definition file (SQLite3)
+├── gbcutils/                    # Utility modules for parsing, normalisation, database connections, etc.
+├── tests/                       # Unit tests for the main module
+├── bin/                         # Scripts for analysis operations
+└── README.md
+```
+
+# 🧑‍💻 Core Modules
+
+> 💡 **API Documentation:**
+> Full API reference available at [globalbiodata.github.io/gbc-publication-analysis](https://globalbiodata.github.io/gbc-publication-analysis/)
+
+## globalbiodata
+
+This module contains a number of helpful methods and classes for interacting with GBC data types.
+
+- Object classes for each database table (e.g. Publication, Resource, ResourceMention)
+- Each class includes:
+    - Fetch / write methods
+    - Helper methods for processing
+- Documented with Google-style docstrings — see API docs for full details
+
+## gbcutils
+
+- `europepmc` : contains several helpers for interacting with Europe PMC's API's & data
+- `db` : helper for opening connections to GBC's Google Cloud SQL instance
+- `metadata` : helper methods for sharding & storing article metadata
+- `scibert_classify` : helper methods for running ML classifications
 
 # 🧰 Installation & Setup
 
@@ -79,40 +125,3 @@ The GBC database is hosted on Google's Cloud Platform, so in order to interact w
     ```
 
     ✅ If all tests pass you have completed setup!
-
-
-# 🧠 Project Structure Overview
-
-```
-gbc-publication-analysis/
-│
-├── globalbiodata.               # Core module with database object classes and helpers
-├── gbc_analysis_schema.sql      # Schema definition file (MySQL)
-├── gbc_analysis_schema.sqlite   # Schema definition file (SQLite3)
-├── gbcutils/                    # Utility modules for parsing, normalisation, database connections, etc.
-├── tests/                       # Unit tests for the main module
-├── bin/                         # Scripts for analysis operations
-└── README.md
-```
-
-# 🧑‍💻 Core Modules
-
-> 💡 **API Documentation:**
-> Full API reference available at [globalbiodata.github.io/gbc-publication-analysis](https://globalbiodata.github.io/gbc-publication-analysis/)
-
-## globalbiodata
-
-This module contains a number of helpful methods and classes for interacting with GBC data types.
-
-- Object classes for each database table (e.g. Publication, Resource, ResourceMention)
-- Each class includes:
-    - Fetch / write methods
-    - Helper methods for processing
-- Documented with Google-style docstrings — see API docs for full details
-
-## gbcutils
-
-- `europepmc` : contains several helpers for interacting with Europe PMC's API's & data
-- `db` : helper for opening connections to GBC's Google Cloud SQL instance
-- `metadata` : helper methods for sharding & storing article metadata
-- `scibert_classify` : helper methods for running ML classifications
