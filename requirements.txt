@@ -14,3 +14,4 @@ transformers==4.52.4
 urllib3==2.5.0
 pymysql==1.1.1
 cloud-sql-python-connector[pymysql]==1.18.2
+lxml_html_clean==0.4.2
