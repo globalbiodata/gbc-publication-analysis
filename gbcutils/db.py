@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
-from google.cloud.sql.connector import Connector
 import pymysql
 import sqlalchemy as db
 
 from sqlalchemy.engine import Connection, Engine
 
+if TYPE_CHECKING:
+    from google.cloud.sql.connector import Connector
 
 def get_gbc_connection(test: bool = False, readonly: bool = True, sqluser: str = "gbcreader", sqlpass: str = None) -> tuple[Connector, Engine, Connection]:
     """Get a connection to the GBC Google Cloud SQL instance.
@@ -19,6 +22,7 @@ def get_gbc_connection(test: bool = False, readonly: bool = True, sqluser: str =
     Returns:
         A tuple containing the Google Cloud SQL Connector, SQLAlchemy Engine, and SQLAlchemy Connection objects.
     """
+    from google.cloud.sql.connector import Connector
 
     if not readonly and not sqlpass:
         raise ValueError("You must provide a SQL user credentials if not in readonly mode.")
