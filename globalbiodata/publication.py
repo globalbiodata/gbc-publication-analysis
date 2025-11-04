@@ -5,7 +5,6 @@ from .grant import Grant
 
 from .utils_db import insert_into_table, delete_from_table
 from .utils_fetch import fetch_publication, fetch_accession, fetch_resource_mention
-from .utils import new_publication_from_EuropePMC_result
 
 from typing import Optional, TYPE_CHECKING
 from datetime import datetime, date
@@ -227,4 +226,5 @@ class Publication:
         Returns:
             The Publication object.
         """
+        from .utils import new_publication_from_EuropePMC_result
         return new_publication_from_EuropePMC_result(result, conn=conn, engine=engine)
