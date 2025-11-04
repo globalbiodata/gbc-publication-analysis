@@ -9,7 +9,6 @@ import pandas as pd
 from collections import OrderedDict
 
 import globalbiodata as gbc
-from gbcutils.db import get_gbc_connection
 from gbcutils.europepmc import epmc_search
 
 
@@ -75,6 +74,7 @@ def main(argv=None):
 
     resume_from = args.resume_from
 
+    from gbcutils.db import get_gbc_connection # moved import to avoid SQL dependencies in testing
     gcp_connector, cloud_engine, cloud_conn = get_gbc_connection(
         test=args.test, readonly=False,
         sqluser=os.environ.get('GBC_SQL_USER'),
